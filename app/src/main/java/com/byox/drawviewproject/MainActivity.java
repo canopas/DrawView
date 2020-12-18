@@ -8,14 +8,13 @@ import android.graphics.Paint;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.CardView;
-import android.support.v7.widget.Toolbar;
+import androidx.annotation.NonNull;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -34,8 +33,6 @@ import com.byox.drawviewproject.dialogs.SaveBitmapDialog;
 import com.byox.drawviewproject.dialogs.SelectChoiceDialog;
 import com.byox.drawviewproject.dialogs.SelectImageDialog;
 import com.byox.drawviewproject.utils.AnimateUtils;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.NativeExpressAdView;
 
 import java.io.File;
 
@@ -54,8 +51,6 @@ public class MainActivity extends AppCompatActivity {
     private MenuItem mMenuItemRedo;
     private MenuItem mMenuItemUndo;
 
-    // ADS
-    private NativeExpressAdView mAdView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +62,6 @@ public class MainActivity extends AppCompatActivity {
         setupToolbar();
         setupDrawView();
         setListeners();
-        setupADS();
     }
 
     @Override
@@ -229,15 +223,6 @@ public class MainActivity extends AppCompatActivity {
                 clearDraw();
             }
         });
-    }
-
-    private void setupADS() {
-        mAdView = (NativeExpressAdView) findViewById(R.id.adView);
-        AdRequest adRequest = new AdRequest.Builder()
-                .addTestDevice("FCFD13908AA93E51A1BA390FA8010631")
-                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
-                .build();
-        mAdView.loadAd(adRequest);
     }
 
     private void changeDrawTool() {

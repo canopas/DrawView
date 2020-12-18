@@ -2,7 +2,7 @@ package com.byox.drawviewproject.utils;
 
 import android.content.Context;
 import android.content.res.Configuration;
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.byox.drawviewproject.R;
 import com.ch4vi.flowlayoutmanager.FlowLayoutManager;

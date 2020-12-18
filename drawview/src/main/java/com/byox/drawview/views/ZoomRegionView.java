@@ -1,6 +1,5 @@
 package com.byox.drawview.views;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -9,24 +8,20 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
-import android.graphics.RectF;
-import android.os.Build;
-import android.support.annotation.AttrRes;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.StyleRes;
+
+import androidx.annotation.AttrRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.StyleRes;
 import android.util.AttributeSet;
-import android.util.SizeF;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
 
 /**
  * Created by IngMedina on 30/03/2017.
  */
 
-public class ZoomRegionView extends android.support.v7.widget.AppCompatImageView implements View.OnTouchListener {
+public class ZoomRegionView extends androidx.appcompat.widget.AppCompatImageView implements View.OnTouchListener {
 
     // LISTENER
     private OnZoomRegionListener mOnZoomRegionListener;

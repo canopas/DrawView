@@ -2,27 +2,14 @@ package com.byox.drawview.views;
 
 import android.annotation.TargetApi;
 import android.content.Context;
-import android.content.res.TypedArray;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Typeface;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
-import android.os.Bundle;
-import android.os.Parcelable;
-import android.support.annotation.AttrRes;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.StyleRes;
+
+import androidx.annotation.AttrRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.StyleRes;
 import android.util.AttributeSet;
 import android.widget.FrameLayout;
-
-import com.byox.drawview.R;
-import com.byox.drawview.enums.DrawingMode;
-import com.byox.drawview.enums.DrawingOrientation;
-import com.byox.drawview.enums.DrawingTool;
-import com.byox.drawview.utils.SerializablePaint;
-import com.byox.drawview.utils.ViewUtils;
 
 /**
  * Created by IngMedina on 29/04/2017.
