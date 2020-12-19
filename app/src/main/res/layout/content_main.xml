@@ -13,7 +13,6 @@
         android:id="@+id/draw_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginBottom="80dp"
         app:dv_draw_alpha="255"
         app:dv_draw_anti_alias="true"
         app:dv_draw_color="@color/colorAccent"

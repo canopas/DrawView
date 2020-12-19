@@ -6,37 +6,17 @@
         android:enabled="false"
         android:icon="@drawable/ic_action_content_undo_disabled"
         android:title="@string/undo"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="always" />
     <item
         android:id="@+id/action_redo"
         android:enabled="false"
         android:icon="@drawable/ic_action_content_redo_disabled"
         android:title="@string/redo"
-        app:showAsAction="ifRoom" />
-
-    <item
-        android:id="@+id/action_new_functions"
-        android:icon="@drawable/ic_action_more_vert"
-        android:title="@string/functions"
-        app:showAsAction="always">
-        <menu>
-            <item
-                android:id="@+id/action_clear_history"
-                android:icon="@null"
-                android:title="清空历史"
-                app:showAsAction="always" />
-            <item
-                android:id="@+id/action_switch"
-                android:icon="@null"
-                android:title="绘制开关"
-                app:showAsAction="always" />
-        </menu>
-    </item>
-
+        app:showAsAction="always" />
 
     <item
         android:id="@+id/action_functions"
-        android:icon="@drawable/ic_action_more_vert"
+        android:icon="@drawable/ic_action_palette"
         android:title="@string/functions"
         app:showAsAction="always">
         <menu>
