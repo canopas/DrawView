@@ -20,8 +20,10 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
+
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
+
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -36,6 +38,7 @@ import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.byox.drawview.R;
 import com.byox.drawview.dictionaries.DrawMove;
@@ -45,10 +48,16 @@ import com.byox.drawview.enums.DrawingCapture;
 import com.byox.drawview.enums.DrawingMode;
 import com.byox.drawview.enums.DrawingOrientation;
 import com.byox.drawview.enums.DrawingTool;
+import com.byox.drawview.sticker.DrawObject;
+import com.byox.drawview.sticker.StickerView;
+import com.byox.drawview.sticker.StickerViewListener;
+import com.byox.drawview.sticker.TextSticker;
 import com.byox.drawview.utils.BitmapUtils;
 import com.byox.drawview.utils.MatrixUtils;
 import com.byox.drawview.utils.SerializablePaint;
 import com.byox.drawview.utils.SerializablePath;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -257,7 +266,17 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
                         break;
                     case TEXT:
                         if (drawMove.getText() != null && !drawMove.getText().equals("")) {
-                            mContentCanvas.drawText(drawMove.getText(), drawMove.getEndX(), drawMove.getEndY(), drawMove.getPaint());
+                            String text = drawMove.getText();
+//                        if (drawMove.getText() != null && !drawMove.getText().equals("")) {
+//                            mContentCanvas.drawText(drawMove.getText(), drawMove.getEndX(), drawMove.getEndY(), drawMove.getPaint());
+//                        }
+
+                            mStickerView.setVisibility(View.VISIBLE);
+                            TextSticker sticker = new TextSticker(getContext(), null);
+                            sticker.setText(text);
+                            sticker.setAlpha(255);
+                            sticker.resizeText();
+                            mStickerView.addSticker(sticker);
                         }
                         break;
                     case ERASER:
@@ -511,7 +530,43 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
                         initZoomRegionView();
                     }
                 });
+
+        ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        addView(mStickerView, params);
+        mStickerView.setVisibility(GONE);
     }
+
+    private StickerView mStickerView = new StickerView(getContext(), new StickerViewListener() {
+        @Override
+        public void onRemove() {
+
+        }
+
+        @Override
+        public void onDone(@NotNull DrawObject obj) {
+
+        }
+
+        @Override
+        public void onZoomAndRotate() {
+
+        }
+
+        @Override
+        public void onFlip() {
+
+        }
+
+        @Override
+        public void onClickStickerOutside(float x, float y) {
+
+        }
+
+        @Override
+        public void onTouchEvent(@NotNull MotionEvent event) {
+
+        }
+    });
 
     /**
      * Init the ZoomRegionView for navigate into image when user zoom in
@@ -895,6 +950,7 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param newText
      */
     public void refreshLastText(String newText) {
+        if (mDrawMoveHistory.isEmpty()) return;
         if (mDrawMoveHistory.get(mDrawMoveHistory.size() - 1)
                 .getDrawingMode() == DrawingMode.TEXT) {
             mDrawMoveHistory.get(mDrawMoveHistory.size() - 1).setText(newText);
