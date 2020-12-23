@@ -2,17 +2,20 @@ package com.byox.drawview.sticker
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.os.Build
+import android.text.DynamicLayout
 import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextPaint
+import android.widget.EditText
 import androidx.core.content.ContextCompat
 import com.byox.drawview.R
 
-internal class TextSticker(private val context: Context, drawable: Drawable?): Sticker() {
+internal class TextSticker(private val context: Context, drawable: Drawable?) : Sticker() {
     override lateinit var drawable: Drawable
 
     private var text: String? = null
@@ -32,7 +35,7 @@ internal class TextSticker(private val context: Context, drawable: Drawable?): S
     init {
         if (drawable == null) {
             this.drawable = ContextCompat.getDrawable(context, R.drawable.shape_transfarent_background)!!
-        }else{
+        } else {
             this.drawable = drawable
         }
         textPaint = TextPaint(TextPaint.ANTI_ALIAS_FLAG)
@@ -143,28 +146,28 @@ internal class TextSticker(private val context: Context, drawable: Drawable?): S
         var targetTextHeightPixels = getTextHeightPixels(text, availableWidthPixels, targetTextSizePixels)
 
         while (targetTextHeightPixels > availableHeightPixels
-            && targetTextSizePixels > minTextSizePixels) {
+                && targetTextSizePixels > minTextSizePixels) {
             targetTextSizePixels = Math.max(targetTextSizePixels - 2, minTextSizePixels)
             targetTextHeightPixels = getTextHeightPixels(text, availableWidthPixels, targetTextSizePixels)
         }
 
         if (targetTextSizePixels == minTextSizePixels
-            && targetTextHeightPixels > availableHeightPixels) {
+                && targetTextHeightPixels > availableHeightPixels) {
             val textPaintCopy = TextPaint(textPaint)
             textPaintCopy.textSize = targetTextSizePixels
 
             val staticLayout = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 StaticLayout.Builder
-                    .obtain(text,0, text.length, textPaintCopy, availableWidthPixels)
-                    .setAlignment(Layout.Alignment.ALIGN_NORMAL)
-                    .setLineSpacing(lineSpacingExtra, lineSpacingMultiplier)
-                    .setIncludePad(false)
-                    .build()
+                        .obtain(text, 0, text.length, textPaintCopy, availableWidthPixels)
+                        .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+                        .setLineSpacing(lineSpacingExtra, lineSpacingMultiplier)
+                        .setIncludePad(false)
+                        .build()
             } else {
                 @Suppress("DEPRECATION")
                 (StaticLayout(
-                    text, textPaintCopy, availableWidthPixels, Layout.Alignment.ALIGN_NORMAL,
-                    lineSpacingMultiplier, lineSpacingExtra, false
+                        text, textPaintCopy, availableWidthPixels, Layout.Alignment.ALIGN_NORMAL,
+                        lineSpacingMultiplier, lineSpacingExtra, false
                 ))
             }
 
@@ -187,16 +190,16 @@ internal class TextSticker(private val context: Context, drawable: Drawable?): S
         textPaint.textSize = targetTextSizePixels
         staticLayout = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             StaticLayout.Builder
-                .obtain(this.text!!,0, this.text!!.length, textPaint, textRect.width())
-                .setAlignment(alignment)
-                .setLineSpacing(lineSpacingExtra, lineSpacingMultiplier)
-                .setIncludePad(true)
-                .build()
+                    .obtain(this.text!!, 0, this.text!!.length, textPaint, textRect.width())
+                    .setAlignment(alignment)
+                    .setLineSpacing(lineSpacingExtra, lineSpacingMultiplier)
+                    .setIncludePad(true)
+                    .build()
         } else {
             @Suppress("DEPRECATION")
             (StaticLayout(
-                this.text!!, textPaint, availableWidthPixels, alignment,
-                lineSpacingMultiplier, lineSpacingExtra, true
+                    this.text!!, textPaint, availableWidthPixels, alignment,
+                    lineSpacingMultiplier, lineSpacingExtra, true
             ))
         }
         return this
@@ -206,16 +209,16 @@ internal class TextSticker(private val context: Context, drawable: Drawable?): S
         textPaint.textSize = textSizePixels
         val staticLayout = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             StaticLayout.Builder
-                .obtain(source,0, 0, textPaint, availableWidthPixels)
-                .setAlignment(Layout.Alignment.ALIGN_NORMAL)
-                .setLineSpacing(lineSpacingExtra, lineSpacingMultiplier)
-                .setIncludePad(true)
-                .build()
+                    .obtain(source, 0, 0, textPaint, availableWidthPixels)
+                    .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+                    .setLineSpacing(lineSpacingExtra, lineSpacingMultiplier)
+                    .setIncludePad(true)
+                    .build()
         } else {
             @Suppress("DEPRECATION")
             (StaticLayout(
-                source, textPaint, availableWidthPixels, Layout.Alignment.ALIGN_NORMAL,
-                lineSpacingMultiplier, lineSpacingExtra, true
+                    source, textPaint, availableWidthPixels, Layout.Alignment.ALIGN_NORMAL,
+                    lineSpacingMultiplier, lineSpacingExtra, true
             ))
         }
 
