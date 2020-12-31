@@ -289,6 +289,10 @@ internal class StickerView(context: Context, private val stickerViewListener: St
         return true
     }
 
+    fun getCurrentStickerMatrix(): Matrix {
+        return Sticker.getMatrix(currentSticker!!)
+    }
+
     private fun handleCurrentMode(event: MotionEvent) {
         when (currentMode) {
             NONE, CLICK -> {

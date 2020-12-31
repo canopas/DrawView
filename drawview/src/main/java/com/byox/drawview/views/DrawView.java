@@ -206,7 +206,7 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
 
         if (mDrawMoveBackgroundIndex != -1 && mDrawMoveHistory != null && mDrawMoveHistory.size() > 0) {
             DrawMove drawMove = mDrawMoveHistory.get(mDrawMoveBackgroundIndex);
-            drawBackgroundImage(drawMove, mContentCanvas);
+            drawBackgroundImage(drawMove, canvas);
         }
 
         for (int i = 0; i < mDrawMoveHistoryIndex + 1; i++) {
@@ -897,16 +897,21 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      */
     public Object[] createCapture(DrawingCapture drawingCapture) {
         Object[] result = null;
+
+        Bitmap bgBimtap = getBackgroundImageBitmap();
+        Bitmap combinedBitmap = bgBimtap != null ? BitmapUtils.GetCombinedBitmaps(bgBimtap, mContentBitmap,
+                mContentBitmap.getWidth(), mContentBitmap.getHeight()) : mContentBitmap;
+
         switch (drawingCapture) {
             case BITMAP:
                 result = new Object[2];
-                result[0] = mContentBitmap;
+                result[0] = combinedBitmap;
                 result[1] = mBackgroundPaint.getColor() == Color.TRANSPARENT ? "PNG" : "JPG";
                 break;
             case BYTES:
                 result = new Object[2];
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                mContentBitmap.compress(
+                combinedBitmap.compress(
                         mBackgroundPaint.getColor() == Color.TRANSPARENT ?
                                 Bitmap.CompressFormat.PNG : Bitmap.CompressFormat.JPEG,
                         100, stream);
@@ -915,6 +920,16 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
                 break;
         }
         return result;
+    }
+
+    private Bitmap getBackgroundImageBitmap() {
+        if (mDrawMoveBackgroundIndex != -1 && mDrawMoveHistory != null && mDrawMoveHistory.size() > 0) {
+            DrawMove drawMove = mDrawMoveHistory.get(mDrawMoveBackgroundIndex);
+            return BitmapFactory.decodeByteArray(drawMove.getBackgroundImage(), 0,
+                    drawMove.getBackgroundImage().length);
+        }
+
+        return null;
     }
 
     public Object[] createCapture(DrawingCapture drawingCapture, CameraView cameraView) {
