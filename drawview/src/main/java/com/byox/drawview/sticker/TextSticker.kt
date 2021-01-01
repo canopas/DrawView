@@ -1,10 +1,7 @@
 package com.byox.drawview.sticker
 
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Rect
-import android.graphics.Typeface
+import android.graphics.*
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.text.DynamicLayout
@@ -23,7 +20,7 @@ internal class TextSticker(private val context: Context, drawable: Drawable?) : 
 
     private val realBounds: Rect
     private val textRect: Rect
-    private val textPaint: TextPaint
+    private var textPaint: TextPaint
     private var staticLayout: StaticLayout? = null
     private var alignment: Layout.Alignment
 
@@ -52,6 +49,8 @@ internal class TextSticker(private val context: Context, drawable: Drawable?) : 
 
     override val height: Int
         get() = drawable.intrinsicHeight
+
+    fun getTextPaint() = textPaint
 
     override fun draw(canvas: Canvas) {
         val matrix = matrix
@@ -205,6 +204,10 @@ internal class TextSticker(private val context: Context, drawable: Drawable?) : 
         return this
     }
 
+    fun getTextSize(): Float {
+        return textPaint.textSize
+    }
+
     private fun getTextHeightPixels(source: CharSequence, availableWidthPixels: Int, textSizePixels: Float): Int {
         textPaint.textSize = textSizePixels
         val staticLayout = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -223,6 +226,10 @@ internal class TextSticker(private val context: Context, drawable: Drawable?) : 
         }
 
         return staticLayout.height
+    }
+
+    fun getText(): String {
+        return text ?: ""
     }
 
     private fun convertSpToPx(scaledPixels: Float): Float {

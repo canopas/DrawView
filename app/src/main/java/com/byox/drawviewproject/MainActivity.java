@@ -8,13 +8,17 @@ import android.graphics.Paint;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+
 import androidx.annotation.NonNull;
+
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
+
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -101,6 +105,9 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case R.id.action_draw_save:
                 requestPermissions(0);
+                break;
+            case R.id.action_draw_text:
+                mDrawView.setDrawingMode(DrawingMode.TEXT);
                 break;
             case R.id.action_view_camera_option:
                 Intent i = new Intent(MainActivity.this, CameraActivity.class);

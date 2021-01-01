@@ -3,7 +3,7 @@ package com.byox.drawview.sticker
 import android.view.MotionEvent
 
 internal interface StickerViewListener {
-    fun onRemove()
+    fun onRemove(currentSticker: Sticker?)
     fun onDone(obj: DrawObject)
     fun onZoomAndRotate()
     fun onFlip()

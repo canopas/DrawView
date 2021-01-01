@@ -1,20 +1,15 @@
 package com.byox.drawview.dictionaries;
 
-import android.graphics.Bitmap;
 import android.graphics.Matrix;
-import android.graphics.Paint;
-import android.graphics.Path;
 
-import com.byox.drawview.enums.BackgroundScale;
-import com.byox.drawview.enums.BackgroundType;
 import com.byox.drawview.enums.DrawingMode;
 import com.byox.drawview.enums.DrawingTool;
+import com.byox.drawview.sticker.Sticker;
+import com.byox.drawview.sticker.TextSticker;
 import com.byox.drawview.utils.SerializablePaint;
 import com.byox.drawview.utils.SerializablePath;
 
-import java.io.File;
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * Created by Ing. Oscar G. Medina Cruz on 07/11/2016.
@@ -35,7 +30,8 @@ public class DrawMove implements Serializable {
     //private List<SerializablePath> mDrawingPathList;
     private SerializablePath mDrawingPath;
     private float mStartX, mStartY, mEndX, mEndY;
-    private String mText;
+    private TextSticker sticker;
+    private Boolean isTextDone = false;
     private Matrix mBackgroundMatrix;
     private byte[] mBackgroundImage;
 
@@ -82,11 +78,15 @@ public class DrawMove implements Serializable {
         return mEndY;
     }
 
-    public String getText() {
-        return mText;
+    public TextSticker getTextSticker() {
+        return sticker;
     }
 
-    public Matrix getBackgroundMatrix(){
+    public String getText() {
+        return sticker.getText();
+    }
+
+    public Matrix getBackgroundMatrix() {
         return mBackgroundMatrix;
     }
 
@@ -94,7 +94,14 @@ public class DrawMove implements Serializable {
         return mBackgroundImage;
     }
 
+    public Boolean isTextDone() {
+        return isTextDone;
+    }
+
     // SETTERS
+    public void setTextDone(Boolean textDone) {
+        isTextDone = textDone;
+    }
 
     public DrawMove setPaint(SerializablePaint paint) {
         if (mSingleton != null) {
@@ -152,9 +159,17 @@ public class DrawMove implements Serializable {
         } else throw new RuntimeException("Create new instance of DrawMove first!");
     }
 
+    public DrawMove setSticker(TextSticker sticker) {
+        if (mSingleton != null) {
+            mSingleton.sticker = sticker;
+            return mSingleton;
+        } else throw new RuntimeException("Create new instance of DrawMove first!");
+    }
+
+
     public DrawMove setText(String text) {
         if (mSingleton != null) {
-            mSingleton.mText = text;
+            mSingleton.sticker.setText(text);
             return mSingleton;
         } else throw new RuntimeException("Create new instance of DrawMove first!");
     }

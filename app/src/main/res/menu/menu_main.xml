@@ -36,6 +36,11 @@
                 android:id="@+id/action_draw_mode"
                 android:icon="@drawable/ic_action_edit"
                 android:title="@string/draw_mode" />
+
+            <item
+                android:id="@+id/action_draw_text"
+                android:icon="@drawable/ic_action_edit"
+                android:title="Text" />
             <item
                 android:id="@+id/action_draw_save"
                 android:icon="@drawable/ic_action_save"

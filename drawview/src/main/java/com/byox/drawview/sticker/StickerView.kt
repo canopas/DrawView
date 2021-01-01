@@ -3,6 +3,7 @@ package com.byox.drawview.sticker
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
@@ -11,6 +12,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import com.byox.drawview.R
 import com.byox.drawview.sticker.events.DeleteIconEvent
+import com.byox.drawview.sticker.events.DoneIconEvent
 import com.byox.drawview.sticker.events.ZoomIconEvent
 import java.util.*
 import kotlin.math.abs
@@ -80,9 +82,17 @@ internal class StickerView(context: Context, private val stickerViewListener: St
                 RIGHT_BOTTOM
         )
         zoomIcon.iconListener = ZoomIconEvent()
+
+        val doneIcon = StickerIcon(
+                ContextCompat.getDrawable(context, R.drawable.ic_check),
+                RIGHT_TOP
+        )
+        doneIcon.iconListener = DoneIconEvent()
+
         icons.clear()
         icons.add(deleteIcon)
         icons.add(zoomIcon)
+        icons.add(doneIcon)
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -281,7 +291,7 @@ internal class StickerView(context: Context, private val stickerViewListener: St
         }
 
         if (currentIcon == null && !isTouchInsideSticker) {
-            doneSticker(currentSticker)
+           // doneSticker(currentSticker)
             return false
         }
 
@@ -301,6 +311,7 @@ internal class StickerView(context: Context, private val stickerViewListener: St
                 moveMatrix.set(downMatrix)
                 moveMatrix.postTranslate(event.x - downX, event.y - downY)
                 currentSticker!!.setMatrix(moveMatrix)
+                Log.e("StickerView", "Drag")
             }
 
             ZOOM_WITH_TWO_FINGER -> if (currentSticker != null && isTouchInsideSticker) {
@@ -329,7 +340,7 @@ internal class StickerView(context: Context, private val stickerViewListener: St
                 stickerViewListener.onClickStickerOutside(event.x, event.y)
             currentMode = CLICK
         }
-        currentMode =NONE
+        currentMode = NONE
     }
 
     private fun calculateMidPoint(event: MotionEvent?): PointF {
@@ -412,7 +423,7 @@ internal class StickerView(context: Context, private val stickerViewListener: St
             return
         currentSticker = null
         this.visibility = View.GONE
-        stickerViewListener.onRemove()
+        stickerViewListener.onRemove(currentSticker)
     }
 
     private fun doneSticker(sticker: Sticker?) {
@@ -465,8 +476,12 @@ internal class StickerView(context: Context, private val stickerViewListener: St
         flipSticker(currentSticker)
     }
 
+    fun hasText(): Boolean {
+        return currentSticker != null;
+    }
+
     internal class ConstantSticker {
-        companion object{
+        companion object {
             var CENTER = 1
             var TOP = 1 shl 1
             var LEFT = 1 shl 2
