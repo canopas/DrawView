@@ -1,150 +1,149 @@
-package com.byox.drawview.views;
+package com.byox.drawview.views
 
-import android.animation.ValueAnimator;
-import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
-import android.content.Context;
-import android.content.res.TypedArray;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Matrix;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
-import android.graphics.Rect;
-import android.graphics.RectF;
-import android.graphics.Typeface;
-import android.graphics.drawable.ColorDrawable;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Parcelable;
-
-import androidx.annotation.NonNull;
-import androidx.cardview.widget.CardView;
-
-import android.util.AttributeSet;
-import android.util.Log;
-import android.view.GestureDetector;
-import android.view.Gravity;
-import android.view.MotionEvent;
-import android.view.ScaleGestureDetector;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
-import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
-
-import com.byox.drawview.R;
-import com.byox.drawview.dictionaries.DrawMove;
-import com.byox.drawview.enums.BackgroundScale;
-import com.byox.drawview.enums.BackgroundType;
-import com.byox.drawview.enums.DrawingCapture;
-import com.byox.drawview.enums.DrawingMode;
-import com.byox.drawview.enums.DrawingOrientation;
-import com.byox.drawview.enums.DrawingTool;
-import com.byox.drawview.sticker.DrawObject;
-import com.byox.drawview.sticker.Sticker;
-import com.byox.drawview.sticker.StickerView;
-import com.byox.drawview.sticker.StickerViewListener;
-import com.byox.drawview.sticker.TextSticker;
-import com.byox.drawview.utils.BitmapUtils;
-import com.byox.drawview.utils.MatrixUtils;
-import com.byox.drawview.utils.SerializablePaint;
-import com.byox.drawview.utils.SerializablePath;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import android.animation.ValueAnimator
+import android.animation.ValueAnimator.AnimatorUpdateListener
+import android.annotation.SuppressLint
+import android.annotation.TargetApi
+import android.content.Context
+import android.graphics.*
+import android.graphics.Paint.Cap
+import android.graphics.drawable.ColorDrawable
+import android.os.Build
+import android.os.Bundle
+import android.os.Parcelable
+import android.util.AttributeSet
+import android.util.Log
+import android.view.*
+import android.view.GestureDetector.SimpleOnGestureListener
+import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener
+import android.view.View.OnTouchListener
+import android.view.ViewTreeObserver.OnGlobalLayoutListener
+import android.view.animation.AccelerateDecelerateInterpolator
+import android.view.animation.AlphaAnimation
+import android.view.animation.Animation
+import android.widget.FrameLayout
+import android.widget.ImageView
+import androidx.cardview.widget.CardView
+import com.byox.drawview.R
+import com.byox.drawview.dictionaries.DrawMove
+import com.byox.drawview.enums.*
+import com.byox.drawview.sticker.*
+import com.byox.drawview.utils.BitmapUtils
+import com.byox.drawview.utils.MatrixUtils
+import com.byox.drawview.utils.SerializablePaint
+import com.byox.drawview.utils.SerializablePath
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.math.abs
 
 /**
  * Created by Ing. Oscar G. Medina Cruz on 06/11/2016.
- * <p>
+ *
+ *
  * This view was created for draw or paint anything you want.
- * <p>
- * <p>
+ *
+ *
+ *
+ *
  * This view can be configurated for change draw color, width size, can use tools like pen, line, circle, square.
- * </p>
+ *
  *
  * @author Ing. Oscar G. Medina Cruz
  */
-public class DrawView extends FrameLayout implements View.OnTouchListener {
-
+class DrawView : FrameLayout, OnTouchListener {
     // CONSTANTS
-    final String TAG = "DrawView";
+    val TAG = "DrawView"
 
     // LISTENER
-    private OnDrawViewListener onDrawViewListener;
-    private ScaleGestureDetector mScaleGestureDetector;
-    private GestureDetector mGestureDetector;
+    private var onDrawViewListener: OnDrawViewListener? = null
+    private var mScaleGestureDetector: ScaleGestureDetector? = null
+    private var mGestureDetector: GestureDetector? = null
 
     // VARS
-    private boolean isForCamera = false;
+    var isForCamera = false
+        private set
+    var drawColor = 0
+        private set
+    var drawWidth = 0
+        private set
 
-    private int mDrawColor;
-    private int mDrawWidth;
-    private int mDrawAlpha;
-    private boolean mAntiAlias;
-    private boolean mDither;
-    private SerializablePaint.Style mPaintStyle;
-    private SerializablePaint.Cap mLineCap;
-    private Typeface mFontFamily;
-    private float mFontSize;
-    private int mBackgroundColor = -1;
-    //private Object mBackgroundImage;
-    private Bitmap mBackgroundImageBitmap;
-    private Rect mCanvasClipBounds;
+    // GETTERS
+    var drawAlpha = 0
+        private set
+    var isAntiAlias = false
+        private set
+    var isDither = false
+        private set
 
-    private Bitmap mContentBitmap;
-    private Canvas mContentCanvas;
+    //    public Object getBackgroundImage() {
+    //        return mBackgroundImage;
+    //    }
+    var paintStyle: Paint.Style? = null
+        private set
+    var lineCap: Cap? = null
+        private set
+    var fontFamily: Typeface? = null
+        private set
+    var fontSize = 0f
+        private set
+    private var backgroundDrawColor = -1
 
-    private boolean mZoomEnabled = false;
-    private float mZoomFactor = 1.0f;
-    private float mZoomCenterX = -1.0f;
-    private float mZoomCenterY = -1.0f;
-    private float mMaxZoomFactor = 8f;
-    private float mZoomRegionScale = 4f;
-    private float mZoomRegionScaleMin = 2f;
-    private float mZoomRegionScaleMax = 5f;
-    private boolean mFromZoomRegion = false;
-
-    private int mLastTouchEvent = -1;
-
-    private DrawingMode mDrawingMode;
-    private DrawingTool mDrawingTool;
-    private DrawingOrientation mInitialDrawingOrientation;
-
-    private List<DrawMove> mDrawMoveHistory;// 路径记录
-    private int mDrawMoveHistoryIndex = -1;// 历史路径index
-    private int mDrawMoveBackgroundIndex = -1;// background index
-
-    private RectF mAuxRect;
-    private PorterDuffXfermode mEraserXefferMode;
-    private SerializablePaint mBackgroundPaint;
-
-    private Rect mInvalidateRect;
+    private val mBackgroundImageBitmap: Bitmap? = null
+    private var mCanvasClipBounds: Rect? = null
+    private var mContentBitmap: Bitmap? = null
+    private var mContentCanvas: Canvas? = null
+    var isZoomEnabled = false
+        private set
+    private var mZoomFactor = 1.0f
+    private var mZoomCenterX = -1.0f
+    private var mZoomCenterY = -1.0f
+    var maxZoomFactor = 8f
+        private set
+    var zoomRegionScale = 4f
+        private set
+    var zoomRegionScaleMin = 2f
+        private set
+    var zoomRegionScaleMax = 5f
+        private set
+    private var mFromZoomRegion = false
+    private var mLastTouchEvent = -1
+    var drawingMode: DrawingMode? = null
+        private set
+    var drawingTool: DrawingTool? = null
+        private set
+    private var mInitialDrawingOrientation: DrawingOrientation? = null
+    private var mDrawMoveHistory: MutableList<DrawMove> = ArrayList()
+    private var mDrawMoveHistoryIndex = -1 // 历史路径index
+    private var mDrawMoveBackgroundIndex = -1 // background index
+    private var mAuxRect: RectF? = null
+    private var mEraserXefferMode: PorterDuffXfermode? = null
+    private var mBackgroundPaint: SerializablePaint? = null
+    private var mInvalidateRect: Rect? = null
 
     // VIEWS
-    private CardView mZoomRegionCardView;
-    private ZoomRegionView mZoomRegionView;
-
-    private boolean historySwitch = true;// true 开启绘制历史；false 关闭
+    private var mZoomRegionCardView: CardView? = null
+    private var mZoomRegionView: ZoomRegionView? = null
+    /**
+     * 返回绘制历史记录状态
+     *
+     * @return
+     */
+    /**
+     * 绘制记录历史开关
+     *
+     * @param historySwitch true
+     */
+    var historySwitch = true // true 开启绘制历史；false 关闭
 
     /**
      * Default constructor
      *
      * @param context
      */
-    public DrawView(Context context) {
-        super(context);
-        initVars();
+    constructor(context: Context?) : super(context!!) {
+        initVars()
     }
 
     /**
@@ -153,10 +152,9 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param context
      * @param attrs
      */
-    public DrawView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        initVars();
-        initAttributes(context, attrs);
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        initVars()
+        initAttributes(context, attrs)
     }
 
     /**
@@ -166,10 +164,9 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param attrs
      * @param defStyleAttr
      */
-    public DrawView(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        initVars();
-        initAttributes(context, attrs);
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+        initVars()
+        initAttributes(context, attrs)
     }
 
     /**
@@ -181,10 +178,9 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param defStyleRes
      */
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public DrawView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-        initVars();
-        initAttributes(context, attrs);
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes) {
+        initVars()
+        initAttributes(context, attrs)
     }
 
     /**
@@ -192,124 +188,92 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      *
      * @param canvas
      */
-    @Override
-    protected void onDraw(Canvas canvas) {
-        mContentBitmap.eraseColor(Color.TRANSPARENT);
-
-        if (isZoomEnabled()) {
-            canvas.save();
-            canvas.scale(mZoomFactor, mZoomFactor, mZoomCenterX, mZoomCenterY);
+    override fun onDraw(canvas: Canvas) {
+        val mContentCanvas = mContentCanvas ?: return
+        mContentBitmap!!.eraseColor(Color.TRANSPARENT)
+        if (isZoomEnabled) {
+            canvas.save()
+            canvas.scale(mZoomFactor, mZoomFactor, mZoomCenterX, mZoomCenterY)
         }
 
         // Draw canvas background
-        mContentCanvas.drawRect(0, 0, mContentBitmap.getWidth(), mContentBitmap.getHeight(), mBackgroundPaint);
-
-        if (mDrawMoveBackgroundIndex != -1 && mDrawMoveHistory != null && mDrawMoveHistory.size() > 0) {
-            DrawMove drawMove = mDrawMoveHistory.get(mDrawMoveBackgroundIndex);
-            drawBackgroundImage(drawMove, canvas);
+        mContentCanvas.drawRect(0f, 0f, mContentBitmap!!.width.toFloat(), mContentBitmap!!.height.toFloat(), mBackgroundPaint!!)
+        if (mDrawMoveBackgroundIndex != -1 && mDrawMoveHistory.size > 0) {
+            val drawMove = mDrawMoveHistory[mDrawMoveBackgroundIndex]
+            drawBackgroundImage(drawMove, canvas)
         }
-
-        for (int i = 0; i < mDrawMoveHistoryIndex + 1; i++) {
-            DrawMove drawMove = mDrawMoveHistory.get(i);
-            if (drawMove.getDrawingMode() != null) {
-                switch (drawMove.getDrawingMode()) {
-                    case DRAW:
-                        switch (drawMove.getDrawingTool()) {
-                            case PEN:
-                                if (drawMove.getDrawingPath() != null)
-                                    mContentCanvas.drawPath(drawMove.getDrawingPath(), drawMove.getPaint());
-                                break;
-                            case LINE:
-                                mContentCanvas.drawLine(drawMove.getStartX(), drawMove.getStartY(),
-                                        drawMove.getEndX(), drawMove.getEndY(), drawMove.getPaint());
-                                break;
-                            case ARROW:
-                                mContentCanvas.drawLine(drawMove.getStartX(), drawMove.getStartY(),
-                                        drawMove.getEndX(), drawMove.getEndY(), drawMove.getPaint());
-                                float angle = (float) Math.toDegrees(Math.atan2(drawMove.getEndY() - drawMove.getStartY(),
-                                        drawMove.getEndX() - drawMove.getStartX())) - 90;
-                                angle = angle < 0 ? angle + 360 : angle;
-                                float middleWidth = 8f + drawMove.getPaint().getStrokeWidth();
-                                float arrowHeadLarge = 30f + drawMove.getPaint().getStrokeWidth();
-
-                                mContentCanvas.save();
-                                mContentCanvas.translate(drawMove.getEndX(), drawMove.getEndY());
-                                mContentCanvas.rotate(angle);
-                                mContentCanvas.drawLine(0f, 0f, middleWidth, 0f, drawMove.getPaint());
-                                mContentCanvas.drawLine(middleWidth, 0f, 0f, arrowHeadLarge, drawMove.getPaint());
-                                mContentCanvas.drawLine(0f, arrowHeadLarge, -middleWidth, 0f, drawMove.getPaint());
-                                mContentCanvas.drawLine(-middleWidth, 0f, 0f, 0f, drawMove.getPaint());
-                                mContentCanvas.restore();
-
-                                break;
-                            case RECTANGLE:
-                                mContentCanvas.drawRect(drawMove.getStartX(), drawMove.getStartY(),
-                                        drawMove.getEndX(), drawMove.getEndY(), drawMove.getPaint());
-                                break;
-                            case CIRCLE:
-                                if (drawMove.getEndX() > drawMove.getStartX()) {
-                                    mContentCanvas.drawCircle(drawMove.getStartX(), drawMove.getStartY(),
-                                            drawMove.getEndX() - drawMove.getStartX(), drawMove.getPaint());
-                                } else {
-                                    mContentCanvas.drawCircle(drawMove.getStartX(), drawMove.getStartY(),
-                                            drawMove.getStartX() - drawMove.getEndX(), drawMove.getPaint());
-                                }
-                                break;
-                            case ELLIPSE:
-                                mAuxRect.set(drawMove.getEndX() - Math.abs(drawMove.getEndX() - drawMove.getStartX()),
-                                        drawMove.getEndY() - Math.abs(drawMove.getEndY() - drawMove.getStartY()),
-                                        drawMove.getEndX() + Math.abs(drawMove.getEndX() - drawMove.getStartX()),
-                                        drawMove.getEndY() + Math.abs(drawMove.getEndY() - drawMove.getStartY()));
-                                mContentCanvas.drawOval(mAuxRect, drawMove.getPaint());
-                                break;
+        for (i in 0 until mDrawMoveHistoryIndex + 1) {
+            val drawMove = mDrawMoveHistory[i]
+            val drawingMood = drawMove.drawingMode ?: return
+            when (drawingMode) {
+                DrawingMode.DRAW -> when (drawMove.drawingTool) {
+                    DrawingTool.PEN -> if (drawMove.drawingPath != null) mContentCanvas.drawPath(drawMove.drawingPath, drawMove.paint)
+                    DrawingTool.LINE -> mContentCanvas.drawLine(drawMove.startX, drawMove.startY,
+                            drawMove.endX, drawMove.endY, drawMove.paint)
+                    DrawingTool.ARROW -> {
+                        mContentCanvas.drawLine(drawMove.startX, drawMove.startY,
+                                drawMove.endX, drawMove.endY, drawMove.paint)
+                        var angle = Math.toDegrees(Math.atan2((drawMove.endY - drawMove.startY).toDouble(), (
+                                drawMove.endX - drawMove.startX).toDouble())).toFloat() - 90
+                        angle = if (angle < 0) angle + 360 else angle
+                        val middleWidth = 8f + drawMove.paint.strokeWidth
+                        val arrowHeadLarge = 30f + drawMove.paint.strokeWidth
+                        mContentCanvas.save()
+                        mContentCanvas.translate(drawMove.endX, drawMove.endY)
+                        mContentCanvas.rotate(angle)
+                        mContentCanvas.drawLine(0f, 0f, middleWidth, 0f, drawMove.paint)
+                        mContentCanvas.drawLine(middleWidth, 0f, 0f, arrowHeadLarge, drawMove.paint)
+                        mContentCanvas.drawLine(0f, arrowHeadLarge, -middleWidth, 0f, drawMove.paint)
+                        mContentCanvas.drawLine(-middleWidth, 0f, 0f, 0f, drawMove.paint)
+                        mContentCanvas.restore()
+                    }
+                    DrawingTool.RECTANGLE -> mContentCanvas.drawRect(drawMove.startX, drawMove.startY,
+                            drawMove.endX, drawMove.endY, drawMove.paint)
+                    DrawingTool.CIRCLE -> if (drawMove.endX > drawMove.startX) {
+                        mContentCanvas.drawCircle(drawMove.startX, drawMove.startY,
+                                drawMove.endX - drawMove.startX, drawMove.paint)
+                    } else {
+                        mContentCanvas.drawCircle(drawMove.startX, drawMove.startY,
+                                drawMove.startX - drawMove.endX, drawMove.paint)
+                    }
+                    DrawingTool.ELLIPSE -> {
+                        mAuxRect!![drawMove.endX - abs(drawMove.endX - drawMove.startX), drawMove.endY - abs(drawMove.endY - drawMove.startY), drawMove.endX + Math.abs(drawMove.endX - drawMove.startX)] = drawMove.endY + Math.abs(drawMove.endY - drawMove.startY)
+                        mContentCanvas.drawOval(mAuxRect!!, drawMove.paint)
+                    }
+                }
+                DrawingMode.TEXT -> {
+                    val textSticker = drawMove.textSticker ?: return
+                    val text = drawMove.text
+                    if (text.isNotEmpty()) {
+                        if (!drawMove.isTextDone) {
+                            textSticker.resizeText()
+                            mStickerView.visibility = VISIBLE
+                            mStickerView.addSticker(textSticker)
+                        } else {
+                            drawMove.paint.textSize = textSticker.getTextSize()
+                            mContentCanvas.drawText(drawMove.text, drawMove.endX,
+                                    drawMove.endY, textSticker.getTextPaint())
                         }
-                        break;
-                    case TEXT:
-                        TextSticker textSticker = drawMove.getTextSticker();
-                        if (textSticker != null && !textSticker.getText().isEmpty()) {
-                            if (!drawMove.isTextDone()) {
-                                TextSticker sticker = drawMove.getTextSticker();
-                                sticker.resizeText();
-                                mStickerView.setVisibility(View.VISIBLE);
-                                mStickerView.addSticker(sticker);
-                            } else {
-                                String text = drawMove.getText();
-                                TextSticker sticker = drawMove.getTextSticker();
-                                if (!text.isEmpty()) {
-                                    drawMove.getPaint().setTextSize(sticker.getTextSize());
-                                    mContentCanvas.drawText(drawMove.getText(), drawMove.getEndX(),
-                                            drawMove.getEndY(), sticker.getTextPaint());
-                                }
-                            }
-                        }
-                        break;
-                    case ERASER:
-                        if (drawMove.getDrawingPath() != null) {
-                            drawMove.getPaint().setXfermode(mEraserXefferMode);
-                            mContentCanvas.drawPath(drawMove.getDrawingPath(), drawMove.getPaint());
-                            drawMove.getPaint().setXfermode(null);
-                        }
-                        break;
+                    }
+                }
+                DrawingMode.ERASER -> if (drawMove.drawingPath != null) {
+                    drawMove.paint.xfermode = mEraserXefferMode
+                    mContentCanvas.drawPath(drawMove.drawingPath, drawMove.paint)
+                    drawMove.paint.xfermode = null
                 }
             }
 
-            if (i == mDrawMoveHistory.size() - 1 && onDrawViewListener != null)
-                onDrawViewListener.onAllMovesPainted();
+            if (i == mDrawMoveHistory.size - 1) onDrawViewListener?.onAllMovesPainted()
         }
-
-        canvas.getClipBounds(mCanvasClipBounds);
-
-        canvas.drawBitmap(mContentBitmap, 0, 0, null);
-
-        if (isZoomEnabled()) {
-            canvas.restore();
-
-            if (mZoomRegionView != null && !mFromZoomRegion) {
-                mZoomRegionView.drawZoomRegion(mContentBitmap, mCanvasClipBounds, 4);
+        canvas.getClipBounds(mCanvasClipBounds)
+        canvas.drawBitmap(mContentBitmap!!, 0f, 0f, null)
+        if (isZoomEnabled) {
+            canvas.restore()
+            if (!mFromZoomRegion) {
+                mZoomRegionView?.drawZoomRegion(mContentBitmap, mCanvasClipBounds, 4f)
             }
         }
-
-        super.onDraw(canvas);
+        super.onDraw(canvas)
     }
 
     /**
@@ -319,330 +283,270 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param motionEvent
      * @return
      */
-    @Override
-    public boolean onTouch(View view, MotionEvent motionEvent) {
+    override fun onTouch(view: View, motionEvent: MotionEvent): Boolean {
         if (!historySwitch) {
-            return false;
+            return false
         }
-        if (mZoomEnabled) {
-            mScaleGestureDetector.onTouchEvent(motionEvent);
-            mGestureDetector.onTouchEvent(motionEvent);
+        if (isZoomEnabled) {
+            mScaleGestureDetector?.onTouchEvent(motionEvent)
+            mGestureDetector?.onTouchEvent(motionEvent)
         }
-
-        float touchX = motionEvent.getX() / mZoomFactor + mCanvasClipBounds.left;
-        float touchY = motionEvent.getY() / mZoomFactor + mCanvasClipBounds.top;
-
-        int lastMoveIndex = 0;
-
-        if (motionEvent.getPointerCount() == 1) {
-            switch (motionEvent.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN:
-                    mLastTouchEvent = MotionEvent.ACTION_DOWN;
-
-                    if (onDrawViewListener != null)
-                        onDrawViewListener.onStartDrawing();
-
+        val touchX = motionEvent.x / mZoomFactor + mCanvasClipBounds!!.left
+        val touchY = motionEvent.y / mZoomFactor + mCanvasClipBounds!!.top
+        var lastMoveIndex = 0
+        if (motionEvent.pointerCount == 1) {
+            when (motionEvent.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    mLastTouchEvent = MotionEvent.ACTION_DOWN
+                    if (onDrawViewListener != null) onDrawViewListener!!.onStartDrawing()
                     if (mDrawMoveHistoryIndex >= -1 &&
-                            mDrawMoveHistoryIndex < mDrawMoveHistory.size() - 1)
-                        mDrawMoveHistory = mDrawMoveHistory.subList(0, mDrawMoveHistoryIndex + 1);
-
+                            mDrawMoveHistoryIndex < mDrawMoveHistory.size - 1)
+                        mDrawMoveHistory = mDrawMoveHistory.subList(0, mDrawMoveHistoryIndex + 1)
                     mDrawMoveHistory.add(DrawMove.newInstance()
-                            .setPaint(getNewPaintParams())
+                            .setPaint(newPaintParams)
                             .setStartX(touchX).setStartY(touchY)
                             .setEndX(touchX).setEndY(touchY)
-                            .setDrawingMode(mDrawingMode).setDrawingTool(mDrawingTool));
-                    Log.e("Draw view : ", "ACTION_DOWN");
-                    lastMoveIndex = mDrawMoveHistory.size() - 1;
+                            .setDrawingMode(drawingMode).setDrawingTool(drawingTool))
+                    Log.e("Draw view : ", "ACTION_DOWN")
+                    lastMoveIndex = mDrawMoveHistory.size - 1
 
 //                    Paint currentPaint = mDrawMoveHistory.get(mDrawMoveHistory.size() - 1).getPaint();
 //                    currentPaint.setStrokeWidth(currentPaint.getStrokeWidth() / mZoomFactor);
 //                    mDrawMoveHistory.get(mDrawMoveHistory.size() - 1).setPaint(currentPaint);
-
-                    mDrawMoveHistoryIndex++;
-
-                    if (mDrawingTool == DrawingTool.PEN || mDrawingMode == DrawingMode.ERASER) {
-                        SerializablePath path = new SerializablePath();
-                        path.moveTo(touchX, touchY);
-                        path.lineTo(touchX, touchY);
-
-                        mDrawMoveHistory.get(lastMoveIndex).setDrawingPathList(path);
+                    mDrawMoveHistoryIndex++
+                    if (drawingTool == DrawingTool.PEN || drawingMode == DrawingMode.ERASER) {
+                        val path = SerializablePath()
+                        path.moveTo(touchX, touchY)
+                        path.lineTo(touchX, touchY)
+                        mDrawMoveHistory[lastMoveIndex].setDrawingPathList(path)
                     }
-                    break;
-                case MotionEvent.ACTION_MOVE:
-                    if ((mLastTouchEvent == MotionEvent.ACTION_DOWN ||
-                            mLastTouchEvent == MotionEvent.ACTION_MOVE)) {
-                        mLastTouchEvent = MotionEvent.ACTION_MOVE;
-
-                        lastMoveIndex = mDrawMoveHistory.size() - 1;
-
-                        if (mDrawMoveHistory.size() > 0) {
-                            mDrawMoveHistory.get(lastMoveIndex).setEndX(touchX).setEndY(touchY);
-
-                            if (mDrawingTool == DrawingTool.PEN || mDrawingMode == DrawingMode.ERASER) {
-                                for (int i = 0; i < motionEvent.getHistorySize(); i++) {
-                                    float historicalX = motionEvent.getHistoricalX(i) / mZoomFactor + mCanvasClipBounds.left;
-                                    float historicalY = motionEvent.getHistoricalY(i) / mZoomFactor + mCanvasClipBounds.top;
-                                    mDrawMoveHistory.get(lastMoveIndex).getDrawingPath().lineTo(historicalX, historicalY);
-                                }
-                                mDrawMoveHistory.get(lastMoveIndex).getDrawingPath().lineTo(touchX, touchY);
+                }
+                MotionEvent.ACTION_MOVE -> if (mLastTouchEvent == MotionEvent.ACTION_DOWN ||
+                        mLastTouchEvent == MotionEvent.ACTION_MOVE) {
+                    mLastTouchEvent = MotionEvent.ACTION_MOVE
+                    lastMoveIndex = mDrawMoveHistory.size - 1
+                    if (mDrawMoveHistory.size > 0) {
+                        mDrawMoveHistory[lastMoveIndex].setEndX(touchX).endY = touchY
+                        if (drawingTool == DrawingTool.PEN || drawingMode == DrawingMode.ERASER) {
+                            var i = 0
+                            while (i < motionEvent.historySize) {
+                                val historicalX = motionEvent.getHistoricalX(i) / mZoomFactor + mCanvasClipBounds!!.left
+                                val historicalY = motionEvent.getHistoricalY(i) / mZoomFactor + mCanvasClipBounds!!.top
+                                mDrawMoveHistory[lastMoveIndex].drawingPath.lineTo(historicalX, historicalY)
+                                i++
                             }
+                            mDrawMoveHistory[lastMoveIndex].drawingPath.lineTo(touchX, touchY)
                         }
                     }
-                    break;
-                case MotionEvent.ACTION_UP:
-                    lastMoveIndex = mDrawMoveHistory.size() - 1;
-
+                }
+                MotionEvent.ACTION_UP -> {
+                    lastMoveIndex = mDrawMoveHistory.size - 1
                     if (mLastTouchEvent == MotionEvent.ACTION_DOWN) {
-//                        if (mDrawMoveHistory.size() > 0) {
-//                            mDrawMoveHistory.remove(lastMoveIndex);
-//                            mDrawMoveHistoryIndex--;
-//                            lastMoveIndex--;
-//                        }
                     } else if (mLastTouchEvent == MotionEvent.ACTION_MOVE) {
-                        mLastTouchEvent = -1;
-                        if (mDrawMoveHistory.size() > 0) {
-                            mDrawMoveHistory.get(lastMoveIndex).setEndX(touchX).setEndY(touchY);
-
-                            if (mDrawingTool == DrawingTool.PEN || mDrawingMode == DrawingMode.ERASER) {
-                                for (int i = 0; i < motionEvent.getHistorySize(); i++) {
-                                    float historicalX = motionEvent.getHistoricalX(i) / mZoomFactor + mCanvasClipBounds.left;
-                                    float historicalY = motionEvent.getHistoricalY(i) / mZoomFactor + mCanvasClipBounds.top;
-                                    mDrawMoveHistory.get(lastMoveIndex).getDrawingPath().lineTo(historicalX, historicalY);
+                        mLastTouchEvent = -1
+                        if (mDrawMoveHistory.size > 0) {
+                            mDrawMoveHistory[lastMoveIndex].setEndX(touchX).endY = touchY
+                            if (drawingTool == DrawingTool.PEN || drawingMode == DrawingMode.ERASER) {
+                                var i = 0
+                                while (i < motionEvent.historySize) {
+                                    val historicalX = motionEvent.getHistoricalX(i) / mZoomFactor + mCanvasClipBounds!!.left
+                                    val historicalY = motionEvent.getHistoricalY(i) / mZoomFactor + mCanvasClipBounds!!.top
+                                    mDrawMoveHistory[lastMoveIndex].drawingPath.lineTo(historicalX, historicalY)
+                                    i++
                                 }
-                                mDrawMoveHistory.get(lastMoveIndex).getDrawingPath().lineTo(touchX, touchY);
+                                mDrawMoveHistory[lastMoveIndex].drawingPath.lineTo(touchX, touchY)
                             }
                         }
                     }
-
-                    if (onDrawViewListener != null && mDrawingMode == DrawingMode.TEXT) {
-                        Boolean isTextLast = hasTextAtLastPos();
-                        if (isTextLast) {
-                            mStickerView.done();
+                    if (drawingMode == DrawingMode.TEXT) {
+                        val lastTextView = mDrawMoveHistory.findLast { it.drawingMode == DrawingMode.TEXT }
+                        if (lastTextView != null && mStickerView.hasText()) {
+                            mStickerView.done()
                         } else {
-                            onDrawViewListener.onRequestText();
+                            onDrawViewListener?.onRequestText()
                         }
                     }
-                    if (onDrawViewListener != null)
-                        onDrawViewListener.onEndDrawing();
-
-                    break;
-                default:
-                    return false;
+                    onDrawViewListener?.onEndDrawing()
+                }
+                else -> return false
             }
         } else {
-            mLastTouchEvent = -1;
+            mLastTouchEvent = -1
         }
-
-        if (mDrawMoveHistory.size() > 0) {
-            mInvalidateRect = new Rect(
-                    (int) (touchX - (mDrawMoveHistory.get(lastMoveIndex).getPaint().getStrokeWidth() * 2)),
-                    (int) (touchY - (mDrawMoveHistory.get(lastMoveIndex).getPaint().getStrokeWidth() * 2)),
-                    (int) (touchX + (mDrawMoveHistory.get(lastMoveIndex).getPaint().getStrokeWidth() * 2)),
-                    (int) (touchY + (mDrawMoveHistory.get(lastMoveIndex).getPaint().getStrokeWidth() * 2)));
+        if (mDrawMoveHistory.size > 0) {
+            mInvalidateRect = Rect(
+                    (touchX - mDrawMoveHistory[lastMoveIndex].paint.strokeWidth * 2).toInt(),
+                    (touchY - mDrawMoveHistory[lastMoveIndex].paint.strokeWidth * 2).toInt(),
+                    (touchX + mDrawMoveHistory[lastMoveIndex].paint.strokeWidth * 2).toInt(),
+                    (touchY + mDrawMoveHistory[lastMoveIndex].paint.strokeWidth * 2).toInt())
         }
-
-        this.invalidate(mInvalidateRect.left, mInvalidateRect.top, mInvalidateRect.right, mInvalidateRect.bottom);
-        return true;
+        this.invalidate(mInvalidateRect!!.left, mInvalidateRect!!.top, mInvalidateRect!!.right, mInvalidateRect!!.bottom)
+        return true
     }
 
-    @Override
-    protected Parcelable onSaveInstanceState() {
-        Bundle bundle = new Bundle();
-        bundle.putParcelable("superState", super.onSaveInstanceState());
-        bundle.putInt("drawMoveHistorySize", mDrawMoveHistory.size());
-        for (int i = 0; i < mDrawMoveHistory.size(); i++) {
-            bundle.putSerializable("mDrawMoveHistory" + i, mDrawMoveHistory.get(i));
+    override fun onSaveInstanceState(): Parcelable? {
+        val bundle = Bundle()
+        bundle.putParcelable("superState", super.onSaveInstanceState())
+        bundle.putInt("drawMoveHistorySize", mDrawMoveHistory.size)
+        for (i in mDrawMoveHistory.indices) {
+            bundle.putSerializable("mDrawMoveHistory$i", mDrawMoveHistory[i])
         }
-        bundle.putInt("mDrawMoveHistoryIndex", mDrawMoveHistoryIndex);
-        bundle.putInt("mDrawMoveBackgroundIndex", mDrawMoveBackgroundIndex);
-        bundle.putSerializable("mDrawingMode", mDrawingMode);
-        bundle.putSerializable("mDrawingTool", mDrawingTool);
-        bundle.putSerializable("mInitialDrawingOrientation", mInitialDrawingOrientation);
-
-        bundle.putInt("mDrawColor", mDrawColor);
-        bundle.putInt("mDrawWidth", mDrawWidth);
-        bundle.putInt("mDrawAlpha", mDrawAlpha);
-        bundle.putInt("mBackgroundColor", mBackgroundColor);
-        bundle.putBoolean("mAntiAlias", mAntiAlias);
-        bundle.putBoolean("mDither", mDither);
-        bundle.putFloat("mFontSize", mFontSize);
-        bundle.putSerializable("mPaintStyle", mPaintStyle);
-        bundle.putSerializable("mLineCap", mLineCap);
+        bundle.putInt("mDrawMoveHistoryIndex", mDrawMoveHistoryIndex)
+        bundle.putInt("mDrawMoveBackgroundIndex", mDrawMoveBackgroundIndex)
+        bundle.putSerializable("mDrawingMode", drawingMode)
+        bundle.putSerializable("mDrawingTool", drawingTool)
+        bundle.putSerializable("mInitialDrawingOrientation", mInitialDrawingOrientation)
+        bundle.putInt("mDrawColor", drawColor)
+        bundle.putInt("mDrawWidth", drawWidth)
+        bundle.putInt("mDrawAlpha", drawAlpha)
+        bundle.putInt("mBackgroundColor", backgroundDrawColor)
+        bundle.putBoolean("mAntiAlias", isAntiAlias)
+        bundle.putBoolean("mDither", isDither)
+        bundle.putFloat("mFontSize", fontSize)
+        bundle.putSerializable("mPaintStyle", paintStyle)
+        bundle.putSerializable("mLineCap", lineCap)
         bundle.putInt("mFontFamily",
-                mFontFamily == Typeface.DEFAULT ? 0 :
-                        mFontFamily == Typeface.MONOSPACE ? 1 :
-                                mFontFamily == Typeface.SANS_SERIF ? 2 :
-                                        mFontFamily == Typeface.SERIF ? 3 : 0);
-        return bundle;
+                if (fontFamily === Typeface.DEFAULT) 0 else if (fontFamily === Typeface.MONOSPACE) 1 else if (fontFamily === Typeface.SANS_SERIF) 2 else if (fontFamily === Typeface.SERIF) 3 else 0)
+        return bundle
     }
 
-    @Override
-    protected void onRestoreInstanceState(Parcelable state) {
-        if (state instanceof Bundle) {
-            Bundle bundle = (Bundle) state;
-            for (int i = 0; i < bundle.getInt("drawMoveHistorySize"); i++) {
-                mDrawMoveHistory.add((DrawMove) bundle.getSerializable("mDrawMoveHistory" + i));
+    override fun onRestoreInstanceState(state: Parcelable) {
+        var state: Parcelable? = state
+        if (state is Bundle) {
+            val bundle = state
+            for (i in 0 until bundle.getInt("drawMoveHistorySize")) {
+                mDrawMoveHistory.add(bundle.getSerializable("mDrawMoveHistory$i") as DrawMove)
             }
-            mDrawMoveHistoryIndex = bundle.getInt("mDrawMoveHistoryIndex");
-            mDrawMoveBackgroundIndex = bundle.getInt("mDrawMoveBackgroundIndex");
-            mDrawingMode = (DrawingMode) bundle.getSerializable("mDrawingMode");
-            mDrawingTool = (DrawingTool) bundle.getSerializable("mDrawingTool");
-            mInitialDrawingOrientation = (DrawingOrientation) bundle.getSerializable("mInitialDrawingOrientation");
-
-            mDrawColor = bundle.getInt("mDrawColor");
-            mDrawWidth = bundle.getInt("mDrawWidth");
-            mDrawAlpha = bundle.getInt("mDrawAlpha");
-            mBackgroundColor = bundle.getInt("mBackgroundColor");
-            mAntiAlias = bundle.getBoolean("mAntiAlias");
-            mDither = bundle.getBoolean("mDither");
-            mFontSize = bundle.getFloat("mFontSize");
-            mPaintStyle = (SerializablePaint.Style) bundle.getSerializable("mPaintStyle");
-            mLineCap = (SerializablePaint.Cap) bundle.getSerializable("mLineCap");
-            mFontFamily =
-                    bundle.getInt("mFontFamily") == 0 ? Typeface.DEFAULT :
-                            bundle.getInt("mFontFamily") == 1 ? Typeface.MONOSPACE :
-                                    bundle.getInt("mFontFamily") == 2 ? Typeface.SANS_SERIF :
-                                            bundle.getInt("mFontFamily") == 3 ? Typeface.SERIF : Typeface.DEFAULT;
-            state = bundle.getParcelable("superState");
+            mDrawMoveHistoryIndex = bundle.getInt("mDrawMoveHistoryIndex")
+            mDrawMoveBackgroundIndex = bundle.getInt("mDrawMoveBackgroundIndex")
+            drawingMode = bundle.getSerializable("mDrawingMode") as DrawingMode?
+            drawingTool = bundle.getSerializable("mDrawingTool") as DrawingTool?
+            mInitialDrawingOrientation = bundle.getSerializable("mInitialDrawingOrientation") as DrawingOrientation?
+            drawColor = bundle.getInt("mDrawColor")
+            drawWidth = bundle.getInt("mDrawWidth")
+            drawAlpha = bundle.getInt("mDrawAlpha")
+            backgroundDrawColor = bundle.getInt("mBackgroundColor")
+            isAntiAlias = bundle.getBoolean("mAntiAlias")
+            isDither = bundle.getBoolean("mDither")
+            fontSize = bundle.getFloat("mFontSize")
+            paintStyle = bundle.getSerializable("mPaintStyle") as Paint.Style?
+            lineCap = bundle.getSerializable("mLineCap") as Cap?
+            fontFamily = if (bundle.getInt("mFontFamily") == 0) Typeface.DEFAULT else if (bundle.getInt("mFontFamily") == 1) Typeface.MONOSPACE else if (bundle.getInt("mFontFamily") == 2) Typeface.SANS_SERIF else if (bundle.getInt("mFontFamily") == 3) Typeface.SERIF else Typeface.DEFAULT
+            state = bundle.getParcelable("superState")
         }
-        super.onRestoreInstanceState(state);
+        super.onRestoreInstanceState(state)
     }
-
     // PRIVATE METHODS
-
     /**
      * Initialize general vars for the view
      */
-    private void initVars() {
-        mDrawMoveHistory = new ArrayList<>();
-        mScaleGestureDetector = new ScaleGestureDetector(getContext(), new ScaleGestureListener());
-        mGestureDetector = new GestureDetector(getContext(), new GestureListener());
-        mCanvasClipBounds = new Rect();
-        mAuxRect = new RectF();
-        mEraserXefferMode = new PorterDuffXfermode(PorterDuff.Mode.CLEAR);
-
-        setOnTouchListener(this);
-
-        getViewTreeObserver().addOnGlobalLayoutListener(
-                new ViewTreeObserver.OnGlobalLayoutListener() {
-
+    private fun initVars() {
+        mDrawMoveHistory = ArrayList()
+        mScaleGestureDetector = ScaleGestureDetector(context, ScaleGestureListener())
+        mGestureDetector = GestureDetector(context, GestureListener())
+        mCanvasClipBounds = Rect()
+        mAuxRect = RectF()
+        mEraserXefferMode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
+        setOnTouchListener(this)
+        viewTreeObserver.addOnGlobalLayoutListener(
+                object : OnGlobalLayoutListener {
                     @SuppressLint("NewApi")
-                    @SuppressWarnings("deprecation")
-                    @Override
-                    public void onGlobalLayout() {
+                    override fun onGlobalLayout() {
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
-                            getViewTreeObserver()
-                                    .removeGlobalOnLayoutListener(this);
+                            viewTreeObserver
+                                    .removeGlobalOnLayoutListener(this)
                         } else {
-                            getViewTreeObserver()
-                                    .removeOnGlobalLayoutListener(this);
+                            viewTreeObserver
+                                    .removeOnGlobalLayoutListener(this)
                         }
-                        initZoomRegionView();
+                        initZoomRegionView()
                     }
-                });
-
-        ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        addView(mStickerView, params);
-        mStickerView.setVisibility(GONE);
+                })
+        val params = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        addView(mStickerView, params)
+        mStickerView.visibility = GONE
     }
 
-    private StickerView mStickerView = new StickerView(getContext(), new StickerViewListener() {
-        @Override
-        public void onRemove(@Nullable Sticker currentSticker) {
-            undo();
-            Log.e("Draw view ", "removeSticker");
+    private val mStickerView = StickerView(context, object : StickerViewListener {
+        override fun onRemove(currentSticker: Sticker?) {
+            undo()
+            Log.e("Draw view ", "removeSticker")
         }
 
-        @Override
-        public void onDone(@NotNull DrawObject obj) {
-            onTextStickerAdded();
+        override fun onDone(obj: DrawObject) {
+            onTextStickerAdded()
         }
 
-        @Override
-        public void onZoomAndRotate() {
-            Log.e("Draw view ", "onZoomAndRotate");
+        override fun onZoomAndRotate() {
+            Log.e("Draw view ", "onZoomAndRotate")
         }
 
-        @Override
-        public void onFlip() {
-            Log.e("Draw view ", "onFlip");
+        override fun onFlip() {
+            Log.e("Draw view ", "onFlip")
         }
 
-        @Override
-        public void onClickStickerOutside(float x, float y) {
-            Log.e("Draw view ", "onClickStickerOutside");
+        override fun onClickStickerOutside(x: Float, y: Float) {
+            Log.e("Draw view ", "onClickStickerOutside")
         }
 
-        @Override
-        public void onTouchEvent(@NotNull MotionEvent motionEvent) {
-            Log.e("Draw view ", "OnTouch event");
+        override fun onTouchEvent(motionEvent: MotionEvent) {
+            Log.e("Draw view ", "OnTouch event")
             if (hasTextAtLastPos()) {
-                float touchX = motionEvent.getX() / mZoomFactor + mCanvasClipBounds.left;
-                float touchY = motionEvent.getY() / mZoomFactor + mCanvasClipBounds.top;
-                mDrawMoveHistory.get(mDrawMoveHistory.size() - 1).setStartX(touchX).setStartY(touchY)
-                        .setEndX(touchX).setEndY(touchY);
+                val touchX = motionEvent.x / mZoomFactor + mCanvasClipBounds!!.left
+                val touchY = motionEvent.y / mZoomFactor + mCanvasClipBounds!!.top
+                mDrawMoveHistory[mDrawMoveHistory.size - 1].setStartX(touchX).setStartY(touchY)
+                        .setEndX(touchX).endY = touchY
             }
         }
-    });
+    })
 
-    private void onTextStickerAdded() {
-        Log.e("Draw view ", "onDone");
-        if (hasTextAtLastPos()) {
-            mDrawMoveHistory.get(mDrawMoveHistory.size() - 1).setTextDone(true);
-        }
-        invalidate();
+    private fun onTextStickerAdded() {
+        Log.e("Draw view ", "onDone")
+        mDrawMoveHistory.findLast { it.drawingMode==DrawingMode.TEXT }?.isTextDone = true
+        invalidate()
     }
 
-    private Boolean hasTextAtLastPos() {
-        if (mDrawMoveHistory.isEmpty()) return false;
-        DrawMove drawMove = mDrawMoveHistory.get(mDrawMoveHistory.size() - 1);
-
-        if (drawMove.getDrawingMode() == DrawingMode.TEXT) {
-            Log.e("hasTextAtLastPos", "drawMove.getTextSticker() != null " + (drawMove.getTextSticker() != null));
-            return drawMove.getTextSticker() != null;
+    private fun hasTextAtLastPos(): Boolean {
+        if (mDrawMoveHistory.isEmpty()) return false
+        val drawMove = mDrawMoveHistory[mDrawMoveHistory.size - 1]
+        if (drawMove.drawingMode == DrawingMode.TEXT) {
+            Log.e("hasTextAtLastPos", "drawMove.getTextSticker() != null " + (drawMove.textSticker != null))
+            return drawMove.textSticker != null
         }
-        return false;
+        return false
     }
 
     /**
      * Init the ZoomRegionView for navigate into image when user zoom in
      */
-    private void initZoomRegionView() {
+    private fun initZoomRegionView() {
         if (mZoomRegionView == null) {
-
-            Bitmap init = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
-            mContentBitmap = init.copy(Bitmap.Config.ARGB_8888, true);
-            init.recycle();
-            mContentCanvas = new Canvas(mContentBitmap);
-
-            FrameLayout.LayoutParams layoutParams = new LayoutParams(getWidth() / 4, getHeight() / 4,
-                    Gravity.TOP | Gravity.END);
-            layoutParams.setMargins(12, 12, 12, 12);
-            mZoomRegionCardView = new CardView(getContext());
-            mZoomRegionCardView.setLayoutParams(layoutParams);
-            mZoomRegionCardView.setPreventCornerOverlap(true);
-            mZoomRegionCardView.setRadius(0f);
-            mZoomRegionCardView.setUseCompatPadding(true);
-            mZoomRegionCardView.setVisibility(View.INVISIBLE);
-
-            CardView.LayoutParams childLayoutParams = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT);
-            mZoomRegionView = new ZoomRegionView(getContext());
-            mZoomRegionView.setLayoutParams(childLayoutParams);
-            mZoomRegionView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            mZoomRegionView.setOnZoomRegionListener(new ZoomRegionView.OnZoomRegionListener() {
-                @Override
-                public void onZoomRegionMoved(Rect newRect) {
-                    mFromZoomRegion = true;
-                    mZoomCenterX = newRect.centerX() * 4;
-                    mZoomCenterY = newRect.centerY() * 4;
-
-                    invalidate();
-                }
-            });
-
-            mZoomRegionCardView.addView(mZoomRegionView);
-            addView(mZoomRegionCardView);
+            val init = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            mContentBitmap = init.copy(Bitmap.Config.ARGB_8888, true)
+            init.recycle()
+            mContentCanvas = Canvas(mContentBitmap!!)
+            val layoutParams = LayoutParams(width / 4, height / 4,
+                    Gravity.TOP or Gravity.END)
+            layoutParams.setMargins(12, 12, 12, 12)
+            mZoomRegionCardView = CardView(context)
+            mZoomRegionCardView!!.layoutParams = layoutParams
+            mZoomRegionCardView!!.preventCornerOverlap = true
+            mZoomRegionCardView!!.radius = 0f
+            mZoomRegionCardView!!.useCompatPadding = true
+            mZoomRegionCardView!!.visibility = INVISIBLE
+            val childLayoutParams = LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT)
+            mZoomRegionView = ZoomRegionView(context)
+            mZoomRegionView!!.layoutParams = childLayoutParams
+            mZoomRegionView!!.scaleType = ImageView.ScaleType.CENTER_CROP
+            mZoomRegionView!!.setOnZoomRegionListener { newRect ->
+                mFromZoomRegion = true
+                mZoomCenterX = (newRect.centerX() * 4).toFloat()
+                mZoomCenterY = (newRect.centerY() * 4).toFloat()
+                invalidate()
+            }
+            mZoomRegionCardView!!.addView(mZoomRegionView)
+            addView(mZoomRegionCardView)
         }
     }
 
@@ -652,72 +556,67 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param context
      * @param attrs
      */
-    private void initAttributes(Context context, AttributeSet attrs) {
-        TypedArray typedArray = context.getTheme().obtainStyledAttributes(
-                attrs, R.styleable.DrawView, 0, 0);
+    private fun initAttributes(context: Context, attrs: AttributeSet?) {
+        val typedArray = context.theme.obtainStyledAttributes(
+                attrs, R.styleable.DrawView, 0, 0)
         try {
-            mDrawColor = typedArray.getColor(R.styleable.DrawView_dv_draw_color, Color.BLACK);
-            mDrawWidth = typedArray.getInteger(R.styleable.DrawView_dv_draw_width, 3);
-            mDrawAlpha = typedArray.getInteger(R.styleable.DrawView_dv_draw_alpha, 255);
-            mAntiAlias = typedArray.getBoolean(R.styleable.DrawView_dv_draw_anti_alias, true);
-            mDither = typedArray.getBoolean(R.styleable.DrawView_dv_draw_dither, true);
-            int paintStyle = typedArray.getInteger(R.styleable.DrawView_dv_draw_style, 2);
-            if (paintStyle == 0)
-                mPaintStyle = SerializablePaint.Style.FILL;
-            else if (paintStyle == 1)
-                mPaintStyle = SerializablePaint.Style.FILL_AND_STROKE;
-            else if (paintStyle == 2)
-                mPaintStyle = SerializablePaint.Style.STROKE;
-            int cap = typedArray.getInteger(R.styleable.DrawView_dv_draw_corners, 2);
-            if (cap == 0)
-                mLineCap = SerializablePaint.Cap.BUTT;
-            else if (cap == 1)
-                mLineCap = SerializablePaint.Cap.ROUND;
-            else if (cap == 2)
-                mLineCap = SerializablePaint.Cap.SQUARE;
-            int typeface = typedArray.getInteger(R.styleable.DrawView_dv_draw_font_family, 0);
-            if (typeface == 0)
-                mFontFamily = Typeface.DEFAULT;
-            else if (typeface == 1)
-                mFontFamily = Typeface.MONOSPACE;
-            else if (typeface == 2)
-                mFontFamily = Typeface.SANS_SERIF;
-            else if (typeface == 3)
-                mFontFamily = Typeface.SERIF;
-            mFontSize = typedArray.getInteger(R.styleable.DrawView_dv_draw_font_size, 12);
-            isForCamera = typedArray.getBoolean(R.styleable.DrawView_dv_draw_is_camera, false);
-            int orientation = typedArray.getInteger(R.styleable.DrawView_dv_draw_orientation,
-                    getWidth() > getHeight() ? 1 : 0);
-            mInitialDrawingOrientation = DrawingOrientation.values()[orientation];
-            if (getBackground() != null && !isForCamera)
-                try {
-                    mBackgroundColor = ((ColorDrawable) getBackground()).getColor();
-                    setBackgroundColor(Color.TRANSPARENT);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    setBackgroundColor(Color.TRANSPARENT);
-                    mBackgroundColor = ((ColorDrawable) getBackground()).getColor();
-                    setBackgroundResource(R.drawable.drawable_transparent_pattern);
-                }
-            else {
-                setBackgroundColor(Color.TRANSPARENT);
-                mBackgroundColor = ((ColorDrawable) getBackground()).getColor();
-                if (!isForCamera)
-                    setBackgroundResource(R.drawable.drawable_transparent_pattern);
+            drawColor = typedArray.getColor(R.styleable.DrawView_dv_draw_color, Color.BLACK)
+            drawWidth = typedArray.getInteger(R.styleable.DrawView_dv_draw_width, 3)
+            drawAlpha = typedArray.getInteger(R.styleable.DrawView_dv_draw_alpha, 255)
+            isAntiAlias = typedArray.getBoolean(R.styleable.DrawView_dv_draw_anti_alias, true)
+            isDither = typedArray.getBoolean(R.styleable.DrawView_dv_draw_dither, true)
+
+            when (typedArray.getInteger(R.styleable.DrawView_dv_draw_style, 2)) {
+                0 -> this.paintStyle = Paint.Style.FILL
+                1 -> this.paintStyle = Paint.Style.FILL_AND_STROKE
+                2 -> this.paintStyle = Paint.Style.STROKE
             }
 
-            mBackgroundPaint = new SerializablePaint();
-            mBackgroundPaint.setStyle(SerializablePaint.Style.FILL);
-            mBackgroundPaint.setColor(mBackgroundColor != -1 ? mBackgroundColor : Color.TRANSPARENT);
+            when (typedArray.getInteger(R.styleable.DrawView_dv_draw_corners, 2)) {
+                0 -> lineCap = Paint.Cap.BUTT
+                1 -> lineCap = Cap.ROUND
+                2 -> lineCap = Cap.SQUARE
+            }
+            when (typedArray.getInteger(R.styleable.DrawView_dv_draw_font_family, 0)) {
+                0 -> fontFamily = Typeface.DEFAULT
+                1 -> fontFamily = Typeface.MONOSPACE
+                2 -> fontFamily = Typeface.SANS_SERIF
+                3 -> fontFamily = Typeface.SERIF
+            }
 
-            mDrawingTool = DrawingTool.values()[typedArray.getInteger(R.styleable.DrawView_dv_draw_tool, 0)];
-            mDrawingMode = DrawingMode.values()[typedArray.getInteger(R.styleable.DrawView_dv_draw_mode, 0)];
-            mZoomEnabled = typedArray.getBoolean(R.styleable.DrawView_dv_draw_enable_zoom, false);
-            mZoomRegionScale = typedArray.getFloat(R.styleable.DrawView_dv_draw_zoomregion_scale, mZoomRegionScale);
-            mZoomRegionScaleMin = typedArray.getFloat(R.styleable.DrawView_dv_draw_zoomregion_minscale, mZoomRegionScaleMin);
-            mZoomRegionScaleMax = typedArray.getFloat(R.styleable.DrawView_dv_draw_zoomregion_maxscale, mZoomRegionScaleMax);
+            fontSize = typedArray.getInteger(R.styleable.DrawView_dv_draw_font_size, 12).toFloat()
+            isForCamera = typedArray.getBoolean(R.styleable.DrawView_dv_draw_is_camera, false)
+
+            val orientation = typedArray.getInteger(R.styleable.DrawView_dv_draw_orientation,
+                    if (width > height) 1 else 0)
+
+            mInitialDrawingOrientation = DrawingOrientation.values()[orientation]
+
+            if (background != null && !isForCamera) try {
+                backgroundDrawColor = (background as ColorDrawable).color
+                setBackgroundColor(Color.TRANSPARENT)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                setBackgroundColor(Color.TRANSPARENT)
+                backgroundDrawColor = (background as ColorDrawable).color
+                setBackgroundResource(R.drawable.drawable_transparent_pattern)
+            } else {
+                setBackgroundColor(Color.TRANSPARENT)
+                backgroundDrawColor = (background as ColorDrawable).color
+                if (!isForCamera) setBackgroundResource(R.drawable.drawable_transparent_pattern)
+            }
+
+            mBackgroundPaint = SerializablePaint()
+            mBackgroundPaint?.style = Paint.Style.FILL
+            mBackgroundPaint?.color = if (backgroundDrawColor != -1) backgroundDrawColor else Color.TRANSPARENT
+            drawingTool = DrawingTool.values()[typedArray.getInteger(R.styleable.DrawView_dv_draw_tool, 0)]
+            drawingMode = DrawingMode.values()[typedArray.getInteger(R.styleable.DrawView_dv_draw_mode, 0)]
+            isZoomEnabled = typedArray.getBoolean(R.styleable.DrawView_dv_draw_enable_zoom, false)
+            zoomRegionScale = typedArray.getFloat(R.styleable.DrawView_dv_draw_zoomregion_scale, zoomRegionScale)
+            zoomRegionScaleMin = typedArray.getFloat(R.styleable.DrawView_dv_draw_zoomregion_minscale, zoomRegionScaleMin)
+            zoomRegionScaleMax = typedArray.getFloat(R.styleable.DrawView_dv_draw_zoomregion_maxscale, zoomRegionScaleMax)
         } finally {
-            typedArray.recycle();
+            typedArray.recycle()
         }
     }
 
@@ -726,137 +625,105 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      *
      * @return new paint parameters for initialize drawing
      */
-    private SerializablePaint getNewPaintParams() {
-        SerializablePaint paint = new SerializablePaint();
-
-        if (mDrawingMode == DrawingMode.ERASER) {
-            if (mDrawingTool != DrawingTool.PEN) {
-                Log.i(TAG, "For use eraser drawing mode is necessary to use pen tool");
-                mDrawingTool = DrawingTool.PEN;
+    private val newPaintParams: SerializablePaint
+        private get() {
+            val paint = SerializablePaint()
+            if (drawingMode == DrawingMode.ERASER) {
+                if (drawingTool != DrawingTool.PEN) {
+                    Log.i(TAG, "For use eraser drawing mode is necessary to use pen tool")
+                    drawingTool = DrawingTool.PEN
+                }
+                paint.color = backgroundDrawColor
+            } else {
+                paint.color = drawColor
             }
-            paint.setColor(mBackgroundColor);
-        } else {
-            paint.setColor(mDrawColor);
+            paint.style = paintStyle
+            paint.isDither = isDither
+            paint.strokeWidth = drawWidth.toFloat()
+            paint.alpha = drawAlpha
+            paint.isAntiAlias = isAntiAlias
+            paint.strokeCap = lineCap
+            paint.typeface = fontFamily
+            paint.textSize = fontSize
+            return paint
         }
-
-        paint.setStyle(mPaintStyle);
-        paint.setDither(mDither);
-        paint.setStrokeWidth(mDrawWidth);
-        paint.setAlpha(mDrawAlpha);
-        paint.setAntiAlias(mAntiAlias);
-        paint.setStrokeCap(mLineCap);
-        paint.setTypeface(mFontFamily);
-        paint.setTextSize(mFontSize);
-
-        return paint;
-    }
-
     // PUBLIC METHODS
-
     /**
      * Current paint parameters
      *
      * @return current paint parameters
      */
-    public SerializablePaint getCurrentPaintParams() {
-        SerializablePaint currentPaint;
-        if (mDrawMoveHistory.size() > 0 && mDrawMoveHistoryIndex >= 0) {
-            currentPaint = new SerializablePaint();
-            currentPaint.setColor(
-                    mDrawMoveHistory.get(mDrawMoveHistoryIndex).getPaint().getColor());
-            currentPaint.setStyle(
-                    mDrawMoveHistory.get(mDrawMoveHistoryIndex).getPaint().getStyle());
-            currentPaint.setDither(
-                    mDrawMoveHistory.get(mDrawMoveHistoryIndex).getPaint().isDither());
-            currentPaint.setStrokeWidth(
-                    mDrawMoveHistory.get(mDrawMoveHistoryIndex).getPaint().getStrokeWidth());
-            currentPaint.setAlpha(
-                    mDrawMoveHistory.get(mDrawMoveHistoryIndex).getPaint().getAlpha());
-            currentPaint.setAntiAlias(
-                    mDrawMoveHistory.get(mDrawMoveHistoryIndex).getPaint().isAntiAlias());
-            currentPaint.setStrokeCap(
-                    mDrawMoveHistory.get(mDrawMoveHistoryIndex).getPaint().getStrokeCap());
-            currentPaint.setTypeface(
-                    mDrawMoveHistory.get(mDrawMoveHistoryIndex).getPaint().getTypeface());
-            currentPaint.setTextSize(mFontSize);
-        } else {
-            currentPaint = new SerializablePaint();
-            currentPaint.setColor(mDrawColor);
-            currentPaint.setStyle(mPaintStyle);
-            currentPaint.setDither(mDither);
-            currentPaint.setStrokeWidth(mDrawWidth);
-            currentPaint.setAlpha(mDrawAlpha);
-            currentPaint.setAntiAlias(mAntiAlias);
-            currentPaint.setStrokeCap(mLineCap);
-            currentPaint.setTypeface(mFontFamily);
-            currentPaint.setTextSize(24f);
+    val currentPaintParams: SerializablePaint
+        get() {
+            val currentPaint: SerializablePaint
+            if (mDrawMoveHistory.size > 0 && mDrawMoveHistoryIndex >= 0) {
+                currentPaint = SerializablePaint()
+                currentPaint.color = mDrawMoveHistory[mDrawMoveHistoryIndex].paint.color
+                currentPaint.style = mDrawMoveHistory[mDrawMoveHistoryIndex].paint.style
+                currentPaint.isDither = mDrawMoveHistory[mDrawMoveHistoryIndex].paint.isDither
+                currentPaint.strokeWidth = mDrawMoveHistory[mDrawMoveHistoryIndex].paint.strokeWidth
+                currentPaint.alpha = mDrawMoveHistory[mDrawMoveHistoryIndex].paint.alpha
+                currentPaint.isAntiAlias = mDrawMoveHistory[mDrawMoveHistoryIndex].paint.isAntiAlias
+                currentPaint.strokeCap = mDrawMoveHistory[mDrawMoveHistoryIndex].paint.strokeCap
+                currentPaint.typeface = mDrawMoveHistory[mDrawMoveHistoryIndex].paint.typeface
+                currentPaint.textSize = fontSize
+            } else {
+                currentPaint = SerializablePaint()
+                currentPaint.color = drawColor
+                currentPaint.style = paintStyle
+                currentPaint.isDither = isDither
+                currentPaint.strokeWidth = drawWidth.toFloat()
+                currentPaint.alpha = drawAlpha
+                currentPaint.isAntiAlias = isAntiAlias
+                currentPaint.strokeCap = lineCap
+                currentPaint.typeface = fontFamily
+                currentPaint.textSize = 24f
+            }
+            return currentPaint
         }
-        return currentPaint;
-    }
 
     /**
      * Restart all the parameters and drawing history
      *
      * @return if the draw view can be restarted
      */
-    public boolean restartDrawing() {
+    fun restartDrawing(): Boolean {
         if (mDrawMoveHistory != null) {
-            mDrawMoveHistory.clear();
-            mDrawMoveHistoryIndex = -1;
-            mDrawMoveBackgroundIndex = -1;
-            invalidate();
-
-            if (onDrawViewListener != null)
-                onDrawViewListener.onClearDrawing();
-
-            return true;
+            mDrawMoveHistory.clear()
+            mDrawMoveHistoryIndex = -1
+            mDrawMoveBackgroundIndex = -1
+            invalidate()
+            onDrawViewListener?.onClearDrawing()
+            return true
         }
-        invalidate();
-        return false;
+        invalidate()
+        return false
     }
 
     /**
      * 清空绘制记录，不清空背景图片
      */
-    public boolean clearHistory() {
+    fun clearHistory(): Boolean {
         if (mDrawMoveHistory != null) {
             if (mDrawMoveBackgroundIndex != -1) {
-                DrawMove drawMove = mDrawMoveHistory.get(mDrawMoveBackgroundIndex);
-                mDrawMoveHistory.clear();
-                mDrawMoveHistory.add(drawMove);
-                mDrawMoveHistoryIndex = 0;
-                mDrawMoveBackgroundIndex = 0;
-                invalidate();
+                val drawMove = mDrawMoveHistory[mDrawMoveBackgroundIndex]
+                mDrawMoveHistory.clear()
+                mDrawMoveHistory.add(drawMove)
+                mDrawMoveHistoryIndex = 0
+                mDrawMoveBackgroundIndex = 0
+                invalidate()
             } else {
-                mDrawMoveHistory.clear();
-                mDrawMoveHistoryIndex = -1;
-                mDrawMoveBackgroundIndex = -1;
-                invalidate();
+                mDrawMoveHistory.clear()
+                mDrawMoveHistoryIndex = -1
+                mDrawMoveBackgroundIndex = -1
+                invalidate()
             }
-//            if (onDrawViewListener != null)
+            //            if (onDrawViewListener != null)
 //                onDrawViewListener.onClearDrawing();
-            return true;
+            return true
         }
-        invalidate();
-        return false;
-    }
-
-    /**
-     * 绘制记录历史开关
-     *
-     * @param historySwitch true
-     */
-    public void setHistorySwitch(boolean historySwitch) {
-        this.historySwitch = historySwitch;
-    }
-
-    /**
-     * 返回绘制历史记录状态
-     *
-     * @return
-     */
-    public boolean getHistorySwitch() {
-        return this.historySwitch;
+        invalidate()
+        return false
     }
 
     /**
@@ -864,23 +731,21 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      *
      * @return if the view can do the undo action
      */
-    public boolean undo() {
+    fun undo(): Boolean {
         if (mDrawMoveHistoryIndex > -1 &&
-                mDrawMoveHistory.size() > 0) {
-            mDrawMoveHistoryIndex--;
-
-            mDrawMoveBackgroundIndex = -1;
-            for (int i = 0; i < mDrawMoveHistoryIndex + 1; i++) {
-                if (mDrawMoveHistory.get(i).getBackgroundImage() != null) {
-                    mDrawMoveBackgroundIndex = i;
+                mDrawMoveHistory.size > 0) {
+            mDrawMoveHistoryIndex--
+            mDrawMoveBackgroundIndex = -1
+            for (i in 0 until mDrawMoveHistoryIndex + 1) {
+                if (mDrawMoveHistory[i].backgroundImage != null) {
+                    mDrawMoveBackgroundIndex = i
                 }
             }
-
-            invalidate();
-            return true;
+            invalidate()
+            return true
         }
-        invalidate();
-        return false;
+        invalidate()
+        return false
     }
 
     /**
@@ -888,9 +753,9 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      *
      * @return if the view can do the undo action
      */
-    public boolean canUndo() {
+    fun canUndo(): Boolean {
         return mDrawMoveHistoryIndex > -1 &&
-                mDrawMoveHistory.size() > 0;
+                mDrawMoveHistory.size > 0
     }
 
     /**
@@ -898,22 +763,20 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      *
      * @return if the view can do the redo action
      */
-    public boolean redo() {
-        if (mDrawMoveHistoryIndex <= mDrawMoveHistory.size() - 1) {
-            mDrawMoveHistoryIndex++;
-
-            mDrawMoveBackgroundIndex = -1;
-            for (int i = 0; i < mDrawMoveHistoryIndex + 1; i++) {
-                if (mDrawMoveHistory.get(i).getBackgroundImage() != null) {
-                    mDrawMoveBackgroundIndex = i;
+    fun redo(): Boolean {
+        if (mDrawMoveHistoryIndex <= mDrawMoveHistory.size - 1) {
+            mDrawMoveHistoryIndex++
+            mDrawMoveBackgroundIndex = -1
+            for (i in 0 until mDrawMoveHistoryIndex + 1) {
+                if (mDrawMoveHistory[i].backgroundImage != null) {
+                    mDrawMoveBackgroundIndex = i
                 }
             }
-
-            invalidate();
-            return true;
+            invalidate()
+            return true
         }
-        invalidate();
-        return false;
+        invalidate()
+        return false
     }
 
     /**
@@ -921,8 +784,8 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      *
      * @return if the view can do the redo action
      */
-    public boolean canRedo() {
-        return mDrawMoveHistoryIndex < mDrawMoveHistory.size() - 1;
+    fun canRedo(): Boolean {
+        return mDrawMoveHistoryIndex < mDrawMoveHistory.size - 1
     }
 
     /**
@@ -931,68 +794,65 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param drawingCapture
      * @return Object in form of bitmap or byte array
      */
-    public Object[] createCapture(DrawingCapture drawingCapture) {
-        Object[] result = null;
-
-        Bitmap bgBimtap = getBackgroundImageBitmap();
-        Bitmap combinedBitmap = bgBimtap != null ? BitmapUtils.GetCombinedBitmaps(bgBimtap, mContentBitmap,
-                mContentBitmap.getWidth(), mContentBitmap.getHeight()) : mContentBitmap;
-
-        switch (drawingCapture) {
-            case BITMAP:
-                result = new Object[2];
-                result[0] = combinedBitmap;
-                result[1] = mBackgroundPaint.getColor() == Color.TRANSPARENT ? "PNG" : "JPG";
-                break;
-            case BYTES:
-                result = new Object[2];
-                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+    fun createCapture(drawingCapture: DrawingCapture?): Array<Any?>? {
+        var result: Array<Any?>? = null
+        val bgBimtap = backgroundImageBitmap
+        val combinedBitmap = if (bgBimtap != null) BitmapUtils.GetCombinedBitmaps(bgBimtap, mContentBitmap,
+                mContentBitmap!!.width, mContentBitmap!!.height) else mContentBitmap!!
+        when (drawingCapture) {
+            DrawingCapture.BITMAP -> {
+                result = arrayOfNulls(2)
+                result[0] = combinedBitmap
+                result[1] = if (mBackgroundPaint!!.color == Color.TRANSPARENT) "PNG" else "JPG"
+            }
+            DrawingCapture.BYTES -> {
+                result = arrayOfNulls(2)
+                val stream = ByteArrayOutputStream()
                 combinedBitmap.compress(
-                        mBackgroundPaint.getColor() == Color.TRANSPARENT ?
-                                Bitmap.CompressFormat.PNG : Bitmap.CompressFormat.JPEG,
-                        100, stream);
-                result[0] = stream.toByteArray();
-                result[1] = mBackgroundPaint.getColor() == Color.TRANSPARENT ? "PNG" : "JPG";
-                break;
+                        if (mBackgroundPaint!!.color == Color.TRANSPARENT) Bitmap.CompressFormat.PNG else Bitmap.CompressFormat.JPEG,
+                        100, stream)
+                result[0] = stream.toByteArray()
+                result[1] = if (mBackgroundPaint!!.color == Color.TRANSPARENT) "PNG" else "JPG"
+            }
         }
-        return result;
+        return result
     }
 
-    private Bitmap getBackgroundImageBitmap() {
-        if (mDrawMoveBackgroundIndex != -1 && mDrawMoveHistory != null && mDrawMoveHistory.size() > 0) {
-            DrawMove drawMove = mDrawMoveHistory.get(mDrawMoveBackgroundIndex);
-            return BitmapFactory.decodeByteArray(drawMove.getBackgroundImage(), 0,
-                    drawMove.getBackgroundImage().length);
+    private val backgroundImageBitmap: Bitmap?
+        private get() {
+            if (mDrawMoveBackgroundIndex != -1 && mDrawMoveHistory != null && mDrawMoveHistory.size > 0) {
+                val drawMove = mDrawMoveHistory[mDrawMoveBackgroundIndex]
+                return BitmapFactory.decodeByteArray(drawMove.backgroundImage, 0,
+                        drawMove.backgroundImage.size)
+            }
+            return null
         }
 
-        return null;
-    }
-
-    public Object[] createCapture(DrawingCapture drawingCapture, CameraView cameraView) {
-        Object[] result = null;
-        switch (drawingCapture) {
-            case BITMAP:
-                result = new Object[2];
-                Bitmap cameraBitmap = (Bitmap) cameraView.getCameraFrame(drawingCapture);
+    fun createCapture(drawingCapture: DrawingCapture?, cameraView: CameraView): Array<Any?>? {
+        var result: Array<Any?>? = null
+        when (drawingCapture) {
+            DrawingCapture.BITMAP -> {
+                result = arrayOfNulls(2)
+                val cameraBitmap = cameraView.getCameraFrame(drawingCapture) as Bitmap
                 result[0] = BitmapUtils.GetCombinedBitmaps(cameraBitmap, mContentBitmap,
-                        mContentBitmap.getWidth(), mContentBitmap.getHeight());
-                cameraBitmap.recycle();
-                result[1] = "JPG";
-                break;
-            case BYTES:
-                result = new Object[2];
-                ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                byte[] cameraBytes = (byte[]) cameraView.getCameraFrame(drawingCapture);
-                cameraBitmap = BitmapFactory.decodeByteArray(cameraBytes, 0, cameraBytes.length);
-                Bitmap resultBitmap = BitmapUtils.GetCombinedBitmaps(cameraBitmap, mContentBitmap,
-                        mContentBitmap.getWidth(), mContentBitmap.getHeight());
-                resultBitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
-                resultBitmap.recycle();
-                result[0] = stream.toByteArray();
-                result[1] = "JPG";
-                break;
+                        mContentBitmap!!.width, mContentBitmap!!.height)
+                cameraBitmap.recycle()
+                result[1] = "JPG"
+            }
+            DrawingCapture.BYTES -> {
+                result = arrayOfNulls(2)
+                val stream = ByteArrayOutputStream()
+                val cameraBytes = cameraView.getCameraFrame(drawingCapture) as ByteArray
+                val cameraBitmap = BitmapFactory.decodeByteArray(cameraBytes, 0, cameraBytes.size)
+                val resultBitmap = BitmapUtils.GetCombinedBitmaps(cameraBitmap, mContentBitmap,
+                        mContentBitmap!!.width, mContentBitmap!!.height)
+                resultBitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
+                resultBitmap.recycle()
+                result[0] = stream.toByteArray()
+                result[1] = "JPG"
+            }
         }
-        return result;
+        return result
     }
 
     /**
@@ -1000,132 +860,51 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      *
      * @param newText
      */
-    public void refreshLastText(String newText) {
-        if (mDrawMoveHistory.isEmpty()) return;
-        if (mDrawMoveHistory.get(mDrawMoveHistory.size() - 1)
-                .getDrawingMode() == DrawingMode.TEXT) {
-            DrawMove drawMove = mDrawMoveHistory.get(mDrawMoveHistory.size() - 1);
-            if (drawMove.getTextSticker() == null) {
-                TextSticker sticker = new TextSticker(getContext(), null);
-                sticker.setText(newText);
-                sticker.setAlpha(255);
-                drawMove.setSticker(sticker);
+    fun refreshLastText(newText: String) {
+        if (mDrawMoveHistory.isNullOrEmpty()) return
+        val drawMove = mDrawMoveHistory[mDrawMoveHistory.size - 1]
+
+        if (drawMove.drawingMode == DrawingMode.TEXT) {
+            if (drawMove.textSticker == null) {
+                val sticker = TextSticker(context, null)
+                sticker.setText(newText)
+                sticker.setAlpha(255)
+                drawMove.setSticker(sticker)
             }
-            invalidate();
-        } else
-            Log.e(TAG, "The last item that you want to refresh text isn't TEXT element.");
+            invalidate()
+        } else Log.e(TAG, "The last item that you want to refresh text isn't TEXT element.")
     }
 
     /**
      * Delete las history element, this can help for cancel the text request.
      */
-    public void cancelTextRequest() {
-        if (mDrawMoveHistory != null && mDrawMoveHistory.size() > 0) {
-            mDrawMoveHistory.remove(mDrawMoveHistory.size() - 1);
-            mDrawMoveHistoryIndex--;
+    fun cancelTextRequest() {
+        if (mDrawMoveHistory != null && mDrawMoveHistory.size > 0) {
+            mDrawMoveHistory.removeAt(mDrawMoveHistory.size - 1)
+            mDrawMoveHistoryIndex--
         }
     }
 
-    // GETTERS
-    public int getDrawAlpha() {
-        return mDrawAlpha;
-    }
-
-    public int getDrawColor() {
-        return mDrawColor;
-    }
-
-    public int getDrawWidth() {
-        return mDrawWidth;
-    }
-
-    public DrawingMode getDrawingMode() {
-        return mDrawingMode;
-    }
-
-    public DrawingTool getDrawingTool() {
-        return mDrawingTool;
-    }
-
-    public int getBackgroundColor() {
-        return mBackgroundColor;
-    }
-
-//    public Object getBackgroundImage() {
-//        return mBackgroundImage;
-//    }
-
-    public SerializablePaint.Style getPaintStyle() {
-        return mPaintStyle;
-    }
-
-    public SerializablePaint.Cap getLineCap() {
-        return mLineCap;
-    }
-
-    public Typeface getFontFamily() {
-        return mFontFamily;
-    }
-
-    public float getFontSize() {
-        return mFontSize;
-    }
-
-    public boolean isAntiAlias() {
-        return mAntiAlias;
-    }
-
-    public boolean isDither() {
-        return mDither;
-    }
-
-    public boolean isZoomEnabled() {
-        return mZoomEnabled;
-    }
-
-    public boolean isDrawViewEmpty() {
-        return mDrawMoveHistory == null || mDrawMoveHistory.size() == 0;
-    }
-
-    public boolean isForCamera() {
-        return this.isForCamera;
-    }
-
-    public float getMaxZoomFactor() {
-        return mMaxZoomFactor;
-    }
-
-    public float getZoomRegionScale() {
-        return mZoomRegionScale;
-    }
-
-    public float getZoomRegionScaleMin() {
-        return mZoomRegionScaleMin;
-    }
-
-    public float getZoomRegionScaleMax() {
-        return mZoomRegionScaleMax;
-    }
-
+    val isDrawViewEmpty: Boolean
+        get() = mDrawMoveHistory == null || mDrawMoveHistory.size == 0
     // SETTERS
-
     /**
      * Set the new draw parametters easily
      *
      * @param paint
      * @return this instance of the view
      */
-    public DrawView refreshAttributes(SerializablePaint paint) {
-        mDrawColor = paint.getColor();
-        mPaintStyle = paint.getStyle();
-        mDither = paint.isDither();
-        mDrawWidth = (int) paint.getStrokeWidth();
-        mDrawAlpha = paint.getAlpha();
-        mAntiAlias = paint.isAntiAlias();
-        mLineCap = paint.getStrokeCap();
-        mFontFamily = paint.getTypeface();
-        mFontSize = paint.getTextSize();
-        return this;
+    fun refreshAttributes(paint: SerializablePaint): DrawView {
+        drawColor = paint.color
+        paintStyle = paint.style
+        isDither = paint.isDither
+        drawWidth = paint.strokeWidth.toInt()
+        drawAlpha = paint.alpha
+        isAntiAlias = paint.isAntiAlias
+        lineCap = paint.strokeCap
+        fontFamily = paint.typeface
+        fontSize = paint.textSize
+        return this
     }
 
     /**
@@ -1134,9 +913,9 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param drawAlpha
      * @return this instance of the view
      */
-    public DrawView setDrawAlpha(int drawAlpha) {
-        this.mDrawAlpha = drawAlpha;
-        return this;
+    fun setDrawAlpha(drawAlpha: Int): DrawView {
+        this.drawAlpha = drawAlpha
+        return this
     }
 
     /**
@@ -1145,9 +924,9 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param drawColor
      * @return this instance of the view
      */
-    public DrawView setDrawColor(int drawColor) {
-        this.mDrawColor = drawColor;
-        return this;
+    fun setDrawColor(drawColor: Int): DrawView {
+        this.drawColor = drawColor
+        return this
     }
 
     /**
@@ -1156,9 +935,9 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param drawWidth
      * @return this instance of the view
      */
-    public DrawView setDrawWidth(int drawWidth) {
-        this.mDrawWidth = drawWidth;
-        return this;
+    fun setDrawWidth(drawWidth: Int): DrawView {
+        this.drawWidth = drawWidth
+        return this
     }
 
     /**
@@ -1167,9 +946,9 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param drawingMode
      * @return this instance of the view
      */
-    public DrawView setDrawingMode(DrawingMode drawingMode) {
-        this.mDrawingMode = drawingMode;
-        return this;
+    fun setDrawingMode(drawingMode: DrawingMode?): DrawView {
+        this.drawingMode = drawingMode
+        return this
     }
 
     /**
@@ -1178,9 +957,9 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param drawingTool
      * @return this instance of the view
      */
-    public DrawView setDrawingTool(DrawingTool drawingTool) {
-        this.mDrawingTool = drawingTool;
-        return this;
+    fun setDrawingTool(drawingTool: DrawingTool?): DrawView {
+        this.drawingTool = drawingTool
+        return this
     }
 
     /**
@@ -1189,9 +968,9 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param backgroundColor
      * @return this instance of the view
      */
-    public DrawView setBackgroundDrawColor(int backgroundColor) {
-        this.mBackgroundColor = backgroundColor;
-        return this;
+    fun setBackgroundDrawColor(backgroundColor: Int): DrawView {
+        this.backgroundDrawColor = backgroundColor
+        return this
     }
 
     /**
@@ -1200,9 +979,9 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param paintStyle
      * @return this instance of the view
      */
-    public DrawView setPaintStyle(SerializablePaint.Style paintStyle) {
-        this.mPaintStyle = paintStyle;
-        return this;
+    fun setPaintStyle(paintStyle: Paint.Style?): DrawView {
+        this.paintStyle = paintStyle
+        return this
     }
 
     /**
@@ -1211,9 +990,9 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param lineCap
      * @return this instance of the view
      */
-    public DrawView setLineCap(SerializablePaint.Cap lineCap) {
-        this.mLineCap = lineCap;
-        return this;
+    fun setLineCap(lineCap: Cap?): DrawView {
+        this.lineCap = lineCap
+        return this
     }
 
     /**
@@ -1222,9 +1001,9 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param fontFamily
      * @return this instance of the view
      */
-    public DrawView setFontFamily(Typeface fontFamily) {
-        this.mFontFamily = fontFamily;
-        return this;
+    fun setFontFamily(fontFamily: Typeface?): DrawView {
+        this.fontFamily = fontFamily
+        return this
     }
 
     /**
@@ -1233,9 +1012,9 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param fontSize
      * @return this instance of the view
      */
-    public DrawView setFontSize(float fontSize) {
-        this.mFontSize = fontSize;
-        return this;
+    fun setFontSize(fontSize: Float): DrawView {
+        this.fontSize = fontSize
+        return this
     }
 
     /**
@@ -1244,9 +1023,9 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param antiAlias
      * @return this instance of the view
      */
-    public DrawView setAntiAlias(boolean antiAlias) {
-        this.mAntiAlias = antiAlias;
-        return this;
+    fun setAntiAlias(antiAlias: Boolean): DrawView {
+        isAntiAlias = antiAlias
+        return this
     }
 
     /**
@@ -1255,9 +1034,9 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param dither
      * @return this instance of the view
      */
-    public DrawView setDither(boolean dither) {
-        this.mDither = dither;
-        return this;
+    fun setDither(dither: Boolean): DrawView {
+        isDither = dither
+        return this
     }
 
     /**
@@ -1266,9 +1045,9 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param zoomEnabled Value that indicates if the Zoom is enabled
      * @return this instance of the view
      */
-    public DrawView setZoomEnabled(boolean zoomEnabled) {
-        this.mZoomEnabled = zoomEnabled;
-        return this;
+    fun setZoomEnabled(zoomEnabled: Boolean): DrawView {
+        isZoomEnabled = zoomEnabled
+        return this
     }
 
     /**
@@ -1277,9 +1056,9 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param isForCamera Value that indicates if the draw view is for camera
      * @return this instance of the view
      */
-    public DrawView setIsForCamera(boolean isForCamera) {
-        this.isForCamera = isForCamera;
-        return this;
+    fun setIsForCamera(isForCamera: Boolean): DrawView {
+        this.isForCamera = isForCamera
+        return this
     }
 
     /**
@@ -1288,9 +1067,9 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param backgroundColor The background color for the view
      * @return this instance of the view
      */
-    public DrawView setDrawViewBackgroundColor(int backgroundColor) {
-        this.mBackgroundColor = backgroundColor;
-        return this;
+    fun setDrawViewBackgroundColor(backgroundColor: Int): DrawView {
+        this.backgroundDrawColor = backgroundColor
+        return this
     }
 
     /**
@@ -1299,9 +1078,9 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param backgroundPaint The background paint for the view
      * @return this instance of the view
      */
-    public DrawView setBackgroundPaint(SerializablePaint backgroundPaint) {
-        this.mBackgroundPaint = backgroundPaint;
-        return this;
+    fun setBackgroundPaint(backgroundPaint: SerializablePaint?): DrawView {
+        mBackgroundPaint = backgroundPaint
+        return this
     }
 
     /**
@@ -1312,78 +1091,56 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param backgroundScale Background scale (Center crop, center inside, fit xy, fit top or fit bottom)
      * @return this instance of the view
      */
-    public DrawView setBackgroundImage(@NonNull Object backgroundImage,
-                                       @NonNull BackgroundType backgroundType,
-                                       @NonNull BackgroundScale backgroundScale) {
-        if (!(backgroundImage instanceof File) && !(backgroundImage instanceof Bitmap) &&
-                !(backgroundImage instanceof byte[])) {
-            throw new RuntimeException("Background image must be File, Bitmap or ByteArray");
+    fun setBackgroundImage(backgroundImage: Any,
+                           backgroundType: BackgroundType,
+                           backgroundScale: BackgroundScale): DrawView {
+        if (backgroundImage !is File && backgroundImage !is Bitmap &&
+                backgroundImage !is ByteArray) {
+            throw RuntimeException("Background image must be File, Bitmap or ByteArray")
         }
-
         if (isForCamera) {
-            Log.i(TAG, "You can't set a background image if your draw view is for camera");
-            return this;
+            Log.i(TAG, "You can't set a background image if your draw view is for camera")
+            return this
         }
-
-        if (onDrawViewListener != null)
-            onDrawViewListener.onStartDrawing();
-
+        if (onDrawViewListener != null) onDrawViewListener?.onStartDrawing()
         if (mDrawMoveHistoryIndex >= -1 &&
-                mDrawMoveHistoryIndex < mDrawMoveHistory.size() - 1)
-            mDrawMoveHistory = mDrawMoveHistory.subList(0, mDrawMoveHistoryIndex + 1);
-
-        Bitmap bitmap = BitmapUtils.GetBitmapForDrawView(this, backgroundImage, backgroundType, 50);
-        Matrix matrix = new Matrix();
-        switch (backgroundScale) {
-            case CENTER_CROP:
-                matrix = MatrixUtils.GetCenterCropMatrix(new RectF(0, 0,
-                                bitmap.getWidth(),
-                                bitmap.getHeight()),
-                        new RectF(0, 0, getWidth(), getHeight()));
-                break;
-            case CENTER_INSIDE:
-                matrix.setRectToRect(new RectF(0, 0,
-                                bitmap.getWidth(),
-                                bitmap.getHeight()),
-                        new RectF(0, 0, getWidth(), getHeight()), Matrix.ScaleToFit.CENTER);
-                break;
-            case FIT_XY:
-                matrix.setRectToRect(new RectF(0, 0,
-                                bitmap.getWidth(),
-                                bitmap.getHeight()),
-                        new RectF(0, 0, getWidth(), getHeight()), Matrix.ScaleToFit.FILL);
-                break;
-            case FIT_START:
-                matrix.setRectToRect(new RectF(0, 0,
-                                bitmap.getWidth(),
-                                bitmap.getHeight()),
-                        new RectF(0, 0, getWidth(), getHeight()), Matrix.ScaleToFit.START);
-                break;
-            case FIT_END:
-                matrix.setRectToRect(new RectF(0, 0,
-                                bitmap.getWidth(),
-                                bitmap.getHeight()),
-                        new RectF(0, 0, getWidth(), getHeight()), Matrix.ScaleToFit.END);
-                break;
+                mDrawMoveHistoryIndex < mDrawMoveHistory.size - 1) mDrawMoveHistory = mDrawMoveHistory.subList(0, mDrawMoveHistoryIndex + 1)
+        val bitmap = BitmapUtils.GetBitmapForDrawView(this, backgroundImage, backgroundType, 50)
+        var matrix = Matrix()
+        when (backgroundScale) {
+            BackgroundScale.CENTER_CROP -> matrix = MatrixUtils.GetCenterCropMatrix(RectF(0f, 0f,
+                    bitmap.width.toFloat(),
+                    bitmap.height.toFloat()),
+                    RectF(0f, 0f, width.toFloat(), height.toFloat()))
+            BackgroundScale.CENTER_INSIDE -> matrix.setRectToRect(RectF(0f, 0f,
+                    bitmap.width.toFloat(),
+                    bitmap.height.toFloat()),
+                    RectF(0f, 0f, width.toFloat(), height.toFloat()), Matrix.ScaleToFit.CENTER)
+            BackgroundScale.FIT_XY -> matrix.setRectToRect(RectF(0f, 0f,
+                    bitmap.width.toFloat(),
+                    bitmap.height.toFloat()),
+                    RectF(0f, 0f, width.toFloat(), height.toFloat()), Matrix.ScaleToFit.FILL)
+            BackgroundScale.FIT_START -> matrix.setRectToRect(RectF(0f, 0f,
+                    bitmap.width.toFloat(),
+                    bitmap.height.toFloat()),
+                    RectF(0f, 0f, width.toFloat(), height.toFloat()), Matrix.ScaleToFit.START)
+            BackgroundScale.FIT_END -> matrix.setRectToRect(RectF(0f, 0f,
+                    bitmap.width.toFloat(),
+                    bitmap.height.toFloat()),
+                    RectF(0f, 0f, width.toFloat(), height.toFloat()), Matrix.ScaleToFit.END)
         }
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
-        byte[] bitmapArray = byteArrayOutputStream.toByteArray();
-        bitmap.recycle();
-
+        val byteArrayOutputStream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
+        val bitmapArray = byteArrayOutputStream.toByteArray()
+        bitmap.recycle()
         mDrawMoveHistory.add(DrawMove.newInstance()
                 .setBackgroundImage(bitmapArray, matrix)
-                .setPaint(new SerializablePaint()));
-        mDrawMoveHistoryIndex++;
-
-        mDrawMoveBackgroundIndex = mDrawMoveHistoryIndex;
-
-        if (onDrawViewListener != null)
-            onDrawViewListener.onEndDrawing();
-
-        invalidate();
-
-        return this;
+                .setPaint(SerializablePaint()))
+        mDrawMoveHistoryIndex++
+        mDrawMoveBackgroundIndex = mDrawMoveHistoryIndex
+        if (onDrawViewListener != null) onDrawViewListener?.onEndDrawing()
+        invalidate()
+        return this
     }
 
     /**
@@ -1394,45 +1151,33 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param backgroundMatrix Background matrix for the image
      * @return this instance of the view
      */
-    public DrawView setBackgroundImage(@NonNull Object backgroundImage,
-                                       @NonNull BackgroundType backgroundType,
-                                       @NonNull Matrix backgroundMatrix) {
-        if (!(backgroundImage instanceof File) && !(backgroundImage instanceof Bitmap) &&
-                !(backgroundImage instanceof byte[])) {
-            throw new RuntimeException("Background image must be File, Bitmap or ByteArray");
+    fun setBackgroundImage(backgroundImage: Any,
+                           backgroundType: BackgroundType,
+                           backgroundMatrix: Matrix): DrawView {
+        if (backgroundImage !is File && backgroundImage !is Bitmap &&
+                backgroundImage !is ByteArray) {
+            throw RuntimeException("Background image must be File, Bitmap or ByteArray")
         }
-
         if (isForCamera) {
-            Log.i(TAG, "You can't set a background image if your draw view is for camera");
-            return this;
+            Log.i(TAG, "You can't set a background image if your draw view is for camera")
+            return this
         }
-
-        if (onDrawViewListener != null)
-            onDrawViewListener.onStartDrawing();
-
+        if (onDrawViewListener != null) onDrawViewListener?.onStartDrawing()
         if (mDrawMoveHistoryIndex >= -1 &&
-                mDrawMoveHistoryIndex < mDrawMoveHistory.size() - 1)
-            mDrawMoveHistory = mDrawMoveHistory.subList(0, mDrawMoveHistoryIndex + 1);
-
-        Bitmap bitmap = BitmapUtils.GetBitmapForDrawView(this, backgroundImage, backgroundType, 50);
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
-        byte[] bitmapArray = byteArrayOutputStream.toByteArray();
-        bitmap.recycle();
-
+                mDrawMoveHistoryIndex < mDrawMoveHistory.size - 1) mDrawMoveHistory = mDrawMoveHistory.subList(0, mDrawMoveHistoryIndex + 1)
+        val bitmap = BitmapUtils.GetBitmapForDrawView(this, backgroundImage, backgroundType, 50)
+        val byteArrayOutputStream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
+        val bitmapArray = byteArrayOutputStream.toByteArray()
+        bitmap.recycle()
         mDrawMoveHistory.add(DrawMove.newInstance()
                 .setBackgroundImage(bitmapArray, backgroundMatrix)
-                .setPaint(new SerializablePaint()));
-        mDrawMoveHistoryIndex++;
-
-        mDrawMoveBackgroundIndex = mDrawMoveHistoryIndex;
-
-        if (onDrawViewListener != null)
-            onDrawViewListener.onEndDrawing();
-
-        invalidate();
-
-        return this;
+                .setPaint(SerializablePaint()))
+        mDrawMoveHistoryIndex++
+        mDrawMoveBackgroundIndex = mDrawMoveHistoryIndex
+        onDrawViewListener?.onEndDrawing()
+        invalidate()
+        return this
     }
 
     /**
@@ -1441,9 +1186,9 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param maxZoomFactor The max zoom factor target
      * @return this instance of the view
      */
-    public DrawView setMaxZoomFactor(float maxZoomFactor) {
-        this.mMaxZoomFactor = maxZoomFactor;
-        return this;
+    fun setMaxZoomFactor(maxZoomFactor: Float): DrawView {
+        this.maxZoomFactor = maxZoomFactor
+        return this
     }
 
     /**
@@ -1452,9 +1197,9 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param zoomRegionScale ZoomRegionView scale factor (DrawView size / scale)
      * @return this instance of the view
      */
-    public DrawView setZoomRegionScale(float zoomRegionScale) {
-        this.mZoomRegionScale = zoomRegionScale;
-        return this;
+    fun setZoomRegionScale(zoomRegionScale: Float): DrawView {
+        this.zoomRegionScale = zoomRegionScale
+        return this
     }
 
     /**
@@ -1463,9 +1208,9 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param zoomRegionScaleMin ZoomRegionView scale factor minimum
      * @return this instance of the view
      */
-    public DrawView setZoomRegionScaleMin(float zoomRegionScaleMin) {
-        this.mZoomRegionScaleMin = zoomRegionScaleMin;
-        return this;
+    fun setZoomRegionScaleMin(zoomRegionScaleMin: Float): DrawView {
+        this.zoomRegionScaleMin = zoomRegionScaleMin
+        return this
     }
 
     /**
@@ -1474,16 +1219,14 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param zoomRegionScaleMax ZoomRegionView scale factor maximum
      * @return this instance of view
      */
-    public DrawView setZoomRegionScaleMax(float zoomRegionScaleMax) {
-        this.mZoomRegionScaleMax = zoomRegionScaleMax;
-        return this;
+    fun setZoomRegionScaleMax(zoomRegionScaleMax: Float): DrawView {
+        this.zoomRegionScaleMax = zoomRegionScaleMax
+        return this
     }
 
     // PRIVATE METHODS
-
-    @Override
-    protected int[] onCreateDrawableState(int extraSpace) {
-        return super.onCreateDrawableState(extraSpace);
+    override fun onCreateDrawableState(extraSpace: Int): IntArray {
+        return super.onCreateDrawableState(extraSpace)
     }
 
     /**
@@ -1492,9 +1235,9 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      * @param drawMove the DrawMove that contains the background image
      * @param canvas   tha DrawView canvas
      */
-    private void drawBackgroundImage(DrawMove drawMove, Canvas canvas) {
-        canvas.drawBitmap(BitmapFactory.decodeByteArray(drawMove.getBackgroundImage(), 0,
-                drawMove.getBackgroundImage().length), drawMove.getBackgroundMatrix(), null);
+    private fun drawBackgroundImage(drawMove: DrawMove?, canvas: Canvas) {
+        canvas.drawBitmap(BitmapFactory.decodeByteArray(drawMove!!.backgroundImage, 0,
+                drawMove.backgroundImage.size), drawMove.backgroundMatrix, null)
     }
 
     /**
@@ -1502,139 +1245,94 @@ public class DrawView extends FrameLayout implements View.OnTouchListener {
      *
      * @param visibility the ZoomRegionView visibility target
      */
-    private void showHideZoomRegionView(final int visibility) {
-        if (mZoomRegionCardView.getAnimation() == null) {
-            AlphaAnimation alphaAnimation = null;
-
-            if (visibility == INVISIBLE && mZoomRegionCardView.getVisibility() == VISIBLE)
-                alphaAnimation = new AlphaAnimation(1f, 0f);
-            else if (visibility == VISIBLE && mZoomRegionCardView.getVisibility() == INVISIBLE)
-                alphaAnimation = new AlphaAnimation(0f, 1f);
-
+    private fun showHideZoomRegionView(visibility: Int) {
+        if (mZoomRegionCardView!!.animation == null) {
+            var alphaAnimation: AlphaAnimation? = null
+            if (visibility == INVISIBLE && mZoomRegionCardView!!.visibility == VISIBLE) alphaAnimation = AlphaAnimation(1f, 0f) else if (visibility == VISIBLE && mZoomRegionCardView!!.visibility == INVISIBLE) alphaAnimation = AlphaAnimation(0f, 1f)
             if (alphaAnimation != null) {
-                alphaAnimation.setDuration(300);
-                alphaAnimation.setInterpolator(new AccelerateDecelerateInterpolator());
-                alphaAnimation.setAnimationListener(new Animation.AnimationListener() {
-                    @Override
-                    public void onAnimationStart(Animation animation) {
-                        if (visibility == VISIBLE)
-                            mZoomRegionCardView.setVisibility(VISIBLE);
+                alphaAnimation.duration = 300
+                alphaAnimation.interpolator = AccelerateDecelerateInterpolator()
+                alphaAnimation.setAnimationListener(object : Animation.AnimationListener {
+                    override fun onAnimationStart(animation: Animation) {
+                        if (visibility == VISIBLE) mZoomRegionCardView!!.visibility = VISIBLE
                     }
 
-                    @Override
-                    public void onAnimationEnd(Animation animation) {
-                        if (visibility == INVISIBLE)
-                            mZoomRegionCardView.setVisibility(INVISIBLE);
-
-                        mZoomRegionCardView.setAnimation(null);
+                    override fun onAnimationEnd(animation: Animation) {
+                        if (visibility == INVISIBLE) mZoomRegionCardView!!.visibility = INVISIBLE
+                        mZoomRegionCardView!!.animation = null
                     }
 
-                    @Override
-                    public void onAnimationRepeat(Animation animation) {
-
-                    }
-                });
-
-                mZoomRegionCardView.startAnimation(alphaAnimation);
+                    override fun onAnimationRepeat(animation: Animation) {}
+                })
+                mZoomRegionCardView!!.startAnimation(alphaAnimation)
             }
         }
     }
 
     // SCALE
-    private class ScaleGestureListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
-        @Override
-        public boolean onScale(ScaleGestureDetector detector) {
-            if (mZoomEnabled) {
-                mFromZoomRegion = false;
-                mZoomFactor *= detector.getScaleFactor();
-                mZoomFactor = Math.max(1f, Math.min(mZoomFactor, mMaxZoomFactor));
-                mZoomFactor = mZoomFactor > mMaxZoomFactor ? mMaxZoomFactor : mZoomFactor < 1f ? 1f : mZoomFactor;
-                mZoomCenterX = detector.getFocusX() / mZoomFactor + mCanvasClipBounds.left;
-                mZoomCenterY = detector.getFocusY() / mZoomFactor + mCanvasClipBounds.top;
-
-                if (mZoomFactor > 1f)
-                    showHideZoomRegionView(VISIBLE);
-                else
-                    showHideZoomRegionView(INVISIBLE);
-
-                invalidate();
+    private inner class ScaleGestureListener : SimpleOnScaleGestureListener() {
+        override fun onScale(detector: ScaleGestureDetector): Boolean {
+            if (isZoomEnabled) {
+                mFromZoomRegion = false
+                mZoomFactor *= detector.scaleFactor
+                mZoomFactor = Math.max(1f, Math.min(mZoomFactor, maxZoomFactor))
+                mZoomFactor = if (mZoomFactor > maxZoomFactor) maxZoomFactor else if (mZoomFactor < 1f) 1f else mZoomFactor
+                mZoomCenterX = detector.focusX / mZoomFactor + mCanvasClipBounds!!.left
+                mZoomCenterY = detector.focusY / mZoomFactor + mCanvasClipBounds!!.top
+                if (mZoomFactor > 1f) showHideZoomRegionView(VISIBLE) else showHideZoomRegionView(INVISIBLE)
+                invalidate()
             }
-
-            return false;
+            return false
         }
     }
 
-    private class GestureListener extends GestureDetector.SimpleOnGestureListener {
-        @Override
-        public boolean onDoubleTap(final MotionEvent e) {
-            if (mZoomEnabled) {
-                mFromZoomRegion = false;
-                int animationOption = -1;
-
-                if (mZoomFactor >= 1f && mZoomFactor < mMaxZoomFactor)
-                    animationOption = 0;
-                else if (mZoomFactor <= mMaxZoomFactor && mZoomFactor > 1f)
-                    animationOption = 1;
-
+    private inner class GestureListener : SimpleOnGestureListener() {
+        override fun onDoubleTap(e: MotionEvent): Boolean {
+            if (isZoomEnabled) {
+                mFromZoomRegion = false
+                var animationOption = -1
+                if (mZoomFactor >= 1f && mZoomFactor < maxZoomFactor) animationOption = 0 else if (mZoomFactor <= maxZoomFactor && mZoomFactor > 1f) animationOption = 1
                 if (animationOption != -1) {
-                    ValueAnimator valueAnimator = null;
-
-                    if (animationOption == 0)
-                        valueAnimator = ValueAnimator.ofFloat(mZoomFactor, mMaxZoomFactor);
-                    else {
-                        float distance = mMaxZoomFactor - mZoomFactor;
-                        valueAnimator = ValueAnimator.ofFloat(mZoomFactor, distance);
+                    var valueAnimator: ValueAnimator? = null
+                    valueAnimator = if (animationOption == 0) ValueAnimator.ofFloat(mZoomFactor, maxZoomFactor) else {
+                        val distance: Float = maxZoomFactor - mZoomFactor
+                        ValueAnimator.ofFloat(mZoomFactor, distance)
                     }
-
-                    valueAnimator.setDuration(300);
-                    valueAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
-                    valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                        @Override
-                        public void onAnimationUpdate(ValueAnimator animation) {
-                            mZoomFactor = (float) animation.getAnimatedValue();
-//                            Log.i(TAG, "Current Zoom: " + mZoomFactor);
-                            mZoomFactor = mZoomFactor < 1f ? 1 : mZoomFactor;
-                            mZoomCenterX = e.getX() / mZoomFactor + mCanvasClipBounds.left;
-                            mZoomCenterY = e.getY() / mZoomFactor + mCanvasClipBounds.top;
-
-                            if (mZoomFactor > 1f)
-                                mZoomRegionCardView.setVisibility(VISIBLE);
-                            else
-                                mZoomRegionCardView.setVisibility(INVISIBLE);
-
-                            invalidate();
-                        }
-                    });
-                    valueAnimator.start();
+                    valueAnimator.duration = 300
+                    valueAnimator.interpolator = AccelerateDecelerateInterpolator()
+                    valueAnimator.addUpdateListener(AnimatorUpdateListener { animation ->
+                        mZoomFactor = animation.animatedValue as Float
+                        //                            Log.i(TAG, "Current Zoom: " + mZoomFactor);
+                        mZoomFactor = if (mZoomFactor < 1f) 1f else mZoomFactor
+                        mZoomCenterX = e.x / mZoomFactor + mCanvasClipBounds!!.left
+                        mZoomCenterY = e.y / mZoomFactor + mCanvasClipBounds!!.top
+                        if (mZoomFactor > 1f) mZoomRegionCardView!!.visibility = VISIBLE else mZoomRegionCardView!!.visibility = INVISIBLE
+                        invalidate()
+                    })
+                    valueAnimator.start()
                 }
             }
-            return true;
+            return true
         }
     }
-
     // LISTENER
-
     /**
      * Setting new OnDrawViewListener for this view
      *
      * @param onDrawViewListener
      */
-    public void setOnDrawViewListener(OnDrawViewListener onDrawViewListener) {
-        this.onDrawViewListener = onDrawViewListener;
+    fun setOnDrawViewListener(onDrawViewListener: OnDrawViewListener?) {
+        this.onDrawViewListener = onDrawViewListener
     }
 
     /**
      * Listener for registering drawing actions of the view
      */
-    public interface OnDrawViewListener {
-        void onStartDrawing();
-
-        void onEndDrawing();
-
-        void onClearDrawing();
-
-        void onRequestText();
-
-        void onAllMovesPainted();
+    interface OnDrawViewListener {
+        fun onStartDrawing()
+        fun onEndDrawing()
+        fun onClearDrawing()
+        fun onRequestText()
+        fun onAllMovesPainted()
     }
 }
