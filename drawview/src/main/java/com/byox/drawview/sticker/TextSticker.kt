@@ -6,9 +6,7 @@ import android.graphics.drawable.Drawable
 import android.os.Build
 import android.text.DynamicLayout
 import android.text.Layout
-import android.text.StaticLayout
 import android.text.TextPaint
-import android.widget.EditText
 import androidx.core.content.ContextCompat
 import com.byox.drawview.R
 
@@ -21,7 +19,7 @@ internal class TextSticker(private val context: Context, drawable: Drawable?) : 
     private val realBounds: Rect
     private val textRect: Rect
     private var textPaint: TextPaint
-    private var staticLayout: StaticLayout? = null
+    private var dynamicLayout: DynamicLayout? = null
     private var alignment: Layout.Alignment
 
     private var maxTextSizePixels: Float
@@ -63,14 +61,14 @@ internal class TextSticker(private val context: Context, drawable: Drawable?) : 
         canvas.save()
         canvas.concat(matrix)
         if (textRect.width() == width) {
-            val dy = height / 2 - staticLayout!!.height / 2
+            val dy = height / 2 - dynamicLayout!!.height / 2
             canvas.translate(0f, dy.toFloat())
         } else {
             val dx = textRect.left
-            val dy = textRect.top + textRect.height() / 2 - staticLayout!!.height / 2
+            val dy = textRect.top + textRect.height() / 2 - dynamicLayout!!.height / 2
             canvas.translate(dx.toFloat(), dy.toFloat())
         }
-        staticLayout!!.draw(canvas)
+        dynamicLayout!!.draw(canvas)
         canvas.restore()
     }
 
@@ -155,27 +153,27 @@ internal class TextSticker(private val context: Context, drawable: Drawable?) : 
             val textPaintCopy = TextPaint(textPaint)
             textPaintCopy.textSize = targetTextSizePixels
 
-            val staticLayout = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                StaticLayout.Builder
-                        .obtain(text, 0, text.length, textPaintCopy, availableWidthPixels)
+            val dynamicLayout: DynamicLayout = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                DynamicLayout.Builder
+                        .obtain(text, textPaintCopy, availableWidthPixels)
                         .setAlignment(Layout.Alignment.ALIGN_NORMAL)
                         .setLineSpacing(lineSpacingExtra, lineSpacingMultiplier)
                         .setIncludePad(false)
                         .build()
             } else {
                 @Suppress("DEPRECATION")
-                (StaticLayout(
+                (DynamicLayout(
                         text, textPaintCopy, availableWidthPixels, Layout.Alignment.ALIGN_NORMAL,
                         lineSpacingMultiplier, lineSpacingExtra, false
                 ))
             }
 
-            if (staticLayout.lineCount > 0) {
-                val lastLine = staticLayout.getLineForVertical(availableHeightPixels) - 1
+            if (dynamicLayout.lineCount > 0) {
+                val lastLine = dynamicLayout.getLineForVertical(availableHeightPixels) - 1
                 if (lastLine >= 0) {
-                    val startOffset = staticLayout.getLineStart(lastLine)
-                    var endOffset = staticLayout.getLineEnd(lastLine)
-                    var lineWidthPixels = staticLayout.getLineWidth(lastLine)
+                    val startOffset = dynamicLayout.getLineStart(lastLine)
+                    var endOffset = dynamicLayout.getLineEnd(lastLine)
+                    var lineWidthPixels = dynamicLayout.getLineWidth(lastLine)
                     val ellipseWidth = textPaintCopy.measureText(mEllipsis)
 
                     while (availableWidthPixels < lineWidthPixels + ellipseWidth) {
@@ -187,16 +185,16 @@ internal class TextSticker(private val context: Context, drawable: Drawable?) : 
             }
         }
         textPaint.textSize = targetTextSizePixels
-        staticLayout = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            StaticLayout.Builder
-                    .obtain(this.text!!, 0, this.text!!.length, textPaint, textRect.width())
+        dynamicLayout = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            DynamicLayout.Builder
+                    .obtain(this.text!!, textPaint, textRect.width())
                     .setAlignment(alignment)
                     .setLineSpacing(lineSpacingExtra, lineSpacingMultiplier)
                     .setIncludePad(true)
                     .build()
         } else {
             @Suppress("DEPRECATION")
-            (StaticLayout(
+            (DynamicLayout(
                     this.text!!, textPaint, availableWidthPixels, alignment,
                     lineSpacingMultiplier, lineSpacingExtra, true
             ))
@@ -210,22 +208,22 @@ internal class TextSticker(private val context: Context, drawable: Drawable?) : 
 
     private fun getTextHeightPixels(source: CharSequence, availableWidthPixels: Int, textSizePixels: Float): Int {
         textPaint.textSize = textSizePixels
-        val staticLayout = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            StaticLayout.Builder
-                    .obtain(source, 0, 0, textPaint, availableWidthPixels)
+        val dynamicLayout = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            DynamicLayout.Builder
+                    .obtain(source, textPaint, availableWidthPixels)
                     .setAlignment(Layout.Alignment.ALIGN_NORMAL)
                     .setLineSpacing(lineSpacingExtra, lineSpacingMultiplier)
                     .setIncludePad(true)
                     .build()
         } else {
             @Suppress("DEPRECATION")
-            (StaticLayout(
+            (DynamicLayout(
                     source, textPaint, availableWidthPixels, Layout.Alignment.ALIGN_NORMAL,
                     lineSpacingMultiplier, lineSpacingExtra, true
             ))
         }
 
-        return staticLayout.height
+        return dynamicLayout.height
     }
 
     fun getText(): String {

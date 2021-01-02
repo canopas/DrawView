@@ -253,7 +253,6 @@ class DrawView : FrameLayout, OnTouchListener {
                             textSticker.resizeText()
                             mStickerView.visibility = VISIBLE
                             mStickerView.addSticker(textSticker)
-                            drawMove.setSticker(textSticker)
                         } else {
                             val textSticker: TextSticker? = drawMove.textSticker
                             textSticker?.setTextColor(drawMove.paint.color)
