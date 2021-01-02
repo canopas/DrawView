@@ -245,14 +245,16 @@ class DrawView : FrameLayout, OnTouchListener {
                     Log.e("DrawView ", "OnDraw : Text")
                     if (!drawMove.text.isNullOrEmpty()) {
                         if (!drawMove.isTextDone) {
-                            val textSticker = TextSticker(context, null)
-                            textSticker.setText(drawMove.text)
-                            textSticker.setAlpha(255)
-                            textSticker.setTextColor(drawMove.paint.color)
-                            drawMove.setSticker(textSticker)
-                            textSticker.resizeText()
-                            mStickerView.visibility = VISIBLE
-                            mStickerView.addSticker(textSticker)
+                            if (drawMove.textSticker == null) {
+                                val textSticker = TextSticker(context, null)
+                                textSticker.setText(drawMove.text)
+                                textSticker.setAlpha(255)
+                                textSticker.setTextColor(drawMove.paint.color)
+                                drawMove.setSticker(textSticker)
+                                textSticker.resizeText()
+                                mStickerView.visibility = VISIBLE
+                                mStickerView.addSticker(textSticker)
+                            }
                         } else {
                             val textSticker: TextSticker? = drawMove.textSticker
                             textSticker?.setTextColor(drawMove.paint.color)
