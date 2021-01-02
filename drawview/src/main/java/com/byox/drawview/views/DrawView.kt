@@ -248,15 +248,16 @@ class DrawView : FrameLayout, OnTouchListener {
                             val textSticker = TextSticker(context, null)
                             textSticker.setText(drawMove.text)
                             textSticker.setAlpha(255)
+                            textSticker.setTextColor(drawMove.paint.color)
                             drawMove.setSticker(textSticker)
                             textSticker.resizeText()
                             mStickerView.visibility = VISIBLE
                             mStickerView.addSticker(textSticker)
+                            drawMove.setSticker(textSticker)
                         } else {
-                            val textSticker = drawMove.textSticker
-                            Log.e("Draw view ", "Draw text x: " + drawMove.endX + "y : " + drawMove.endY)
-                            mContentCanvas.drawText(drawMove.text, drawMove.endX,
-                                    drawMove.endY, textSticker.getTextPaint())
+                            val textSticker: TextSticker? = drawMove.textSticker
+                            textSticker?.setTextColor(drawMove.paint.color)
+                            textSticker?.draw(mContentCanvas)
                         }
                     }
                 }
@@ -474,7 +475,6 @@ class DrawView : FrameLayout, OnTouchListener {
         }
 
         override fun onDone(obj: DrawObject) {
-            Log.e("Draw view ", "onDone")
             findLastText()?.isTextDone = true
             invalidate()
         }
@@ -486,22 +486,12 @@ class DrawView : FrameLayout, OnTouchListener {
         }
 
         override fun onTouchEvent(x: Float, y: Float) {
-//            Log.e("Draw view ", "OnTouch event x: " + x + "y : " + touchY)
-//
-//            findLastText()?.setEndX(x)?.endY = y
         }
 
         override fun onClickStickerOutside(x: Float, y: Float) {
-            Log.e("Draw view ", "onClickStickerOutside")
         }
 
         override fun onTouchEvent(motionEvent: MotionEvent) {
-            val touchX = motionEvent.x / mZoomFactor + mCanvasClipBounds!!.left
-            val touchY = motionEvent.y / mZoomFactor + mCanvasClipBounds!!.top
-
-            Log.e("Draw view ", "OnTouch event x: " + touchX + "y : " + touchY)
-
-            findLastText()?.setEndX(touchX)?.endY = touchY
         }
     })
 

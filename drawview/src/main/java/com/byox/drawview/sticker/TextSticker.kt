@@ -26,7 +26,7 @@ internal class TextSticker(private val context: Context, drawable: Drawable?) : 
 
     private var maxTextSizePixels: Float
     private var minTextSizePixels: Float
-    private var lineSpacingMultiplier = 1.0f
+    private var lineSpacingMultiplier = 0.8f
     private var lineSpacingExtra = 0.0f
 
     init {
@@ -38,8 +38,8 @@ internal class TextSticker(private val context: Context, drawable: Drawable?) : 
         textPaint = TextPaint(TextPaint.ANTI_ALIAS_FLAG)
         realBounds = Rect(0, 0, width, height)
         textRect = Rect(0, 0, width, height)
-        minTextSizePixels = convertSpToPx(6f)
-        maxTextSizePixels = convertSpToPx(32f)
+        minTextSizePixels = convertSpToPx(4f)
+        maxTextSizePixels = convertSpToPx(20f)
         alignment = Layout.Alignment.ALIGN_CENTER
         textPaint.textSize = maxTextSizePixels
     }
