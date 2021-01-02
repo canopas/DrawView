@@ -204,53 +204,57 @@ class DrawView : FrameLayout, OnTouchListener {
         }
         for (i in 0 until mDrawMoveHistoryIndex + 1) {
             val drawMove = mDrawMoveHistory[i]
-            val drawingMood = drawMove.drawingMode ?: return
-            when (drawingMode) {
-                DrawingMode.DRAW -> when (drawMove.drawingTool) {
-                    DrawingTool.PEN -> if (drawMove.drawingPath != null) mContentCanvas.drawPath(drawMove.drawingPath, drawMove.paint)
-                    DrawingTool.LINE -> mContentCanvas.drawLine(drawMove.startX, drawMove.startY,
-                            drawMove.endX, drawMove.endY, drawMove.paint)
-                    DrawingTool.ARROW -> {
-                        mContentCanvas.drawLine(drawMove.startX, drawMove.startY,
+            when (drawMove.drawingMode) {
+                DrawingMode.DRAW ->
+                    when (drawMove.drawingTool) {
+                        DrawingTool.PEN -> if (drawMove.drawingPath != null) mContentCanvas.drawPath(drawMove.drawingPath, drawMove.paint)
+                        DrawingTool.LINE -> mContentCanvas.drawLine(drawMove.startX, drawMove.startY,
                                 drawMove.endX, drawMove.endY, drawMove.paint)
-                        var angle = Math.toDegrees(Math.atan2((drawMove.endY - drawMove.startY).toDouble(), (
-                                drawMove.endX - drawMove.startX).toDouble())).toFloat() - 90
-                        angle = if (angle < 0) angle + 360 else angle
-                        val middleWidth = 8f + drawMove.paint.strokeWidth
-                        val arrowHeadLarge = 30f + drawMove.paint.strokeWidth
-                        mContentCanvas.save()
-                        mContentCanvas.translate(drawMove.endX, drawMove.endY)
-                        mContentCanvas.rotate(angle)
-                        mContentCanvas.drawLine(0f, 0f, middleWidth, 0f, drawMove.paint)
-                        mContentCanvas.drawLine(middleWidth, 0f, 0f, arrowHeadLarge, drawMove.paint)
-                        mContentCanvas.drawLine(0f, arrowHeadLarge, -middleWidth, 0f, drawMove.paint)
-                        mContentCanvas.drawLine(-middleWidth, 0f, 0f, 0f, drawMove.paint)
-                        mContentCanvas.restore()
+                        DrawingTool.ARROW -> {
+                            mContentCanvas.drawLine(drawMove.startX, drawMove.startY,
+                                    drawMove.endX, drawMove.endY, drawMove.paint)
+                            var angle = Math.toDegrees(Math.atan2((drawMove.endY - drawMove.startY).toDouble(), (
+                                    drawMove.endX - drawMove.startX).toDouble())).toFloat() - 90
+                            angle = if (angle < 0) angle + 360 else angle
+                            val middleWidth = 8f + drawMove.paint.strokeWidth
+                            val arrowHeadLarge = 30f + drawMove.paint.strokeWidth
+                            mContentCanvas.save()
+                            mContentCanvas.translate(drawMove.endX, drawMove.endY)
+                            mContentCanvas.rotate(angle)
+                            mContentCanvas.drawLine(0f, 0f, middleWidth, 0f, drawMove.paint)
+                            mContentCanvas.drawLine(middleWidth, 0f, 0f, arrowHeadLarge, drawMove.paint)
+                            mContentCanvas.drawLine(0f, arrowHeadLarge, -middleWidth, 0f, drawMove.paint)
+                            mContentCanvas.drawLine(-middleWidth, 0f, 0f, 0f, drawMove.paint)
+                            mContentCanvas.restore()
+                        }
+                        DrawingTool.RECTANGLE -> mContentCanvas.drawRect(drawMove.startX, drawMove.startY,
+                                drawMove.endX, drawMove.endY, drawMove.paint)
+                        DrawingTool.CIRCLE -> if (drawMove.endX > drawMove.startX) {
+                            mContentCanvas.drawCircle(drawMove.startX, drawMove.startY,
+                                    drawMove.endX - drawMove.startX, drawMove.paint)
+                        } else {
+                            mContentCanvas.drawCircle(drawMove.startX, drawMove.startY,
+                                    drawMove.startX - drawMove.endX, drawMove.paint)
+                        }
+                        DrawingTool.ELLIPSE -> {
+                            mAuxRect!![drawMove.endX - abs(drawMove.endX - drawMove.startX), drawMove.endY - abs(drawMove.endY - drawMove.startY), drawMove.endX + Math.abs(drawMove.endX - drawMove.startX)] = drawMove.endY + Math.abs(drawMove.endY - drawMove.startY)
+                            mContentCanvas.drawOval(mAuxRect!!, drawMove.paint)
+                        }
                     }
-                    DrawingTool.RECTANGLE -> mContentCanvas.drawRect(drawMove.startX, drawMove.startY,
-                            drawMove.endX, drawMove.endY, drawMove.paint)
-                    DrawingTool.CIRCLE -> if (drawMove.endX > drawMove.startX) {
-                        mContentCanvas.drawCircle(drawMove.startX, drawMove.startY,
-                                drawMove.endX - drawMove.startX, drawMove.paint)
-                    } else {
-                        mContentCanvas.drawCircle(drawMove.startX, drawMove.startY,
-                                drawMove.startX - drawMove.endX, drawMove.paint)
-                    }
-                    DrawingTool.ELLIPSE -> {
-                        mAuxRect!![drawMove.endX - abs(drawMove.endX - drawMove.startX), drawMove.endY - abs(drawMove.endY - drawMove.startY), drawMove.endX + Math.abs(drawMove.endX - drawMove.startX)] = drawMove.endY + Math.abs(drawMove.endY - drawMove.startY)
-                        mContentCanvas.drawOval(mAuxRect!!, drawMove.paint)
-                    }
-                }
                 DrawingMode.TEXT -> {
-                    val textSticker = drawMove.textSticker ?: return
-                    val text = drawMove.text
-                    if (text.isNotEmpty()) {
+                    Log.e("DrawView ", "OnDraw : Text")
+                    if (!drawMove.text.isNullOrEmpty()) {
                         if (!drawMove.isTextDone) {
+                            val textSticker = TextSticker(context, null)
+                            textSticker.setText(drawMove.text)
+                            textSticker.setAlpha(255)
+                            drawMove.setSticker(textSticker)
                             textSticker.resizeText()
                             mStickerView.visibility = VISIBLE
                             mStickerView.addSticker(textSticker)
                         } else {
-                            drawMove.paint.textSize = textSticker.getTextSize()
+                            val textSticker = drawMove.textSticker
+                            Log.e("Draw view ", "Draw text x: " + drawMove.endX + "y : " + drawMove.endY)
                             mContentCanvas.drawText(drawMove.text, drawMove.endX,
                                     drawMove.endY, textSticker.getTextPaint())
                         }
@@ -359,10 +363,7 @@ class DrawView : FrameLayout, OnTouchListener {
                         }
                     }
                     if (drawingMode == DrawingMode.TEXT) {
-                        val lastTextView = mDrawMoveHistory.findLast { it.drawingMode == DrawingMode.TEXT }
-                        if (lastTextView != null && mStickerView.hasText()) {
-                            mStickerView.done()
-                        } else {
+                        if (!mStickerView.hasText()) {
                             onDrawViewListener?.onRequestText()
                         }
                     }
@@ -470,19 +471,24 @@ class DrawView : FrameLayout, OnTouchListener {
     private val mStickerView = StickerView(context, object : StickerViewListener {
         override fun onRemove(currentSticker: Sticker?) {
             undo()
-            Log.e("Draw view ", "removeSticker")
         }
 
         override fun onDone(obj: DrawObject) {
-            onTextStickerAdded()
+            Log.e("Draw view ", "onDone")
+            findLastText()?.isTextDone = true
+            invalidate()
         }
 
         override fun onZoomAndRotate() {
-            Log.e("Draw view ", "onZoomAndRotate")
         }
 
         override fun onFlip() {
-            Log.e("Draw view ", "onFlip")
+        }
+
+        override fun onTouchEvent(x: Float, y: Float) {
+//            Log.e("Draw view ", "OnTouch event x: " + x + "y : " + touchY)
+//
+//            findLastText()?.setEndX(x)?.endY = y
         }
 
         override fun onClickStickerOutside(x: Float, y: Float) {
@@ -490,30 +496,17 @@ class DrawView : FrameLayout, OnTouchListener {
         }
 
         override fun onTouchEvent(motionEvent: MotionEvent) {
-            Log.e("Draw view ", "OnTouch event")
-            if (hasTextAtLastPos()) {
-                val touchX = motionEvent.x / mZoomFactor + mCanvasClipBounds!!.left
-                val touchY = motionEvent.y / mZoomFactor + mCanvasClipBounds!!.top
-                mDrawMoveHistory[mDrawMoveHistory.size - 1].setStartX(touchX).setStartY(touchY)
-                        .setEndX(touchX).endY = touchY
-            }
+            val touchX = motionEvent.x / mZoomFactor + mCanvasClipBounds!!.left
+            val touchY = motionEvent.y / mZoomFactor + mCanvasClipBounds!!.top
+
+            Log.e("Draw view ", "OnTouch event x: " + touchX + "y : " + touchY)
+
+            findLastText()?.setEndX(touchX)?.endY = touchY
         }
     })
 
-    private fun onTextStickerAdded() {
-        Log.e("Draw view ", "onDone")
-        mDrawMoveHistory.findLast { it.drawingMode==DrawingMode.TEXT }?.isTextDone = true
-        invalidate()
-    }
-
-    private fun hasTextAtLastPos(): Boolean {
-        if (mDrawMoveHistory.isEmpty()) return false
-        val drawMove = mDrawMoveHistory[mDrawMoveHistory.size - 1]
-        if (drawMove.drawingMode == DrawingMode.TEXT) {
-            Log.e("hasTextAtLastPos", "drawMove.getTextSticker() != null " + (drawMove.textSticker != null))
-            return drawMove.textSticker != null
-        }
-        return false
+    private fun findLastText(): DrawMove? {
+        return mDrawMoveHistory.findLast { it.drawingMode == DrawingMode.TEXT }
     }
 
     /**
@@ -689,6 +682,7 @@ class DrawView : FrameLayout, OnTouchListener {
      */
     fun restartDrawing(): Boolean {
         if (mDrawMoveHistory != null) {
+            mStickerView.remove()
             mDrawMoveHistory.clear()
             mDrawMoveHistoryIndex = -1
             mDrawMoveBackgroundIndex = -1
@@ -736,6 +730,10 @@ class DrawView : FrameLayout, OnTouchListener {
                 mDrawMoveHistory.size > 0) {
             mDrawMoveHistoryIndex--
             mDrawMoveBackgroundIndex = -1
+            val lastText = findLastText()
+            if (lastText != null && !lastText.isTextDone) {
+                mStickerView.remove()
+            }
             for (i in 0 until mDrawMoveHistoryIndex + 1) {
                 if (mDrawMoveHistory[i].backgroundImage != null) {
                     mDrawMoveBackgroundIndex = i
@@ -866,10 +864,7 @@ class DrawView : FrameLayout, OnTouchListener {
 
         if (drawMove.drawingMode == DrawingMode.TEXT) {
             if (drawMove.textSticker == null) {
-                val sticker = TextSticker(context, null)
-                sticker.setText(newText)
-                sticker.setAlpha(255)
-                drawMove.setSticker(sticker)
+                drawMove.text = newText
             }
             invalidate()
         } else Log.e(TAG, "The last item that you want to refresh text isn't TEXT element.")

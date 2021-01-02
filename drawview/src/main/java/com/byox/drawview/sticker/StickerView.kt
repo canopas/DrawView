@@ -130,12 +130,14 @@ internal class StickerView(context: Context, private val stickerViewListener: St
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        stickerViewListener.onTouchEvent(event)
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> if (!onTouchDown(event)) {
+                Log.e("Stickerview", "ACTION_DOWN")
                 return false
             }
             MotionEvent.ACTION_POINTER_DOWN -> {
+                Log.e("Stickerview", "ACTION_POINTER_DOWN")
+
                 oldDistance = calculateDistance(event)
                 oldRotation = calculateRotation(event)
                 midPoint = calculateMidPoint(event)
@@ -151,8 +153,13 @@ internal class StickerView(context: Context, private val stickerViewListener: St
                 handleCurrentMode(event)
                 invalidate()
             }
-            MotionEvent.ACTION_UP -> onTouchUp(event)
+            MotionEvent.ACTION_UP -> {
+                Log.e("Stickerview", "ACTION_UP")
+                onTouchUp(event)
+            }
             MotionEvent.ACTION_POINTER_UP -> {
+                Log.e("Stickerview", "ACTION_POINTER_UP")
+
                 currentMode = NONE
             }
         }
@@ -291,7 +298,7 @@ internal class StickerView(context: Context, private val stickerViewListener: St
         }
 
         if (currentIcon == null && !isTouchInsideSticker) {
-           // doneSticker(currentSticker)
+            doneSticker(currentSticker)
             return false
         }
 
@@ -311,6 +318,7 @@ internal class StickerView(context: Context, private val stickerViewListener: St
                 moveMatrix.set(downMatrix)
                 moveMatrix.postTranslate(event.x - downX, event.y - downY)
                 currentSticker!!.setMatrix(moveMatrix)
+                stickerViewListener.onTouchEvent(event)
                 Log.e("StickerView", "Drag")
             }
 
@@ -479,6 +487,7 @@ internal class StickerView(context: Context, private val stickerViewListener: St
     fun hasText(): Boolean {
         return currentSticker != null;
     }
+
 
     internal class ConstantSticker {
         companion object {

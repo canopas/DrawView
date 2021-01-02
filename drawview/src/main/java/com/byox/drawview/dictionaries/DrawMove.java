@@ -31,6 +31,7 @@ public class DrawMove implements Serializable {
     private SerializablePath mDrawingPath;
     private float mStartX, mStartY, mEndX, mEndY;
     private TextSticker sticker;
+    private String stickerText;
     private Boolean isTextDone = false;
     private Matrix mBackgroundMatrix;
     private byte[] mBackgroundImage;
@@ -83,7 +84,7 @@ public class DrawMove implements Serializable {
     }
 
     public String getText() {
-        return sticker.getText();
+        return stickerText;
     }
 
     public Matrix getBackgroundMatrix() {
@@ -169,7 +170,7 @@ public class DrawMove implements Serializable {
 
     public DrawMove setText(String text) {
         if (mSingleton != null) {
-            mSingleton.sticker.setText(text);
+            mSingleton.stickerText = text;
             return mSingleton;
         } else throw new RuntimeException("Create new instance of DrawMove first!");
     }
