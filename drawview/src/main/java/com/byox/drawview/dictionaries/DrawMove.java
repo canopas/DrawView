@@ -6,9 +6,12 @@ import com.byox.drawview.enums.DrawingMode;
 import com.byox.drawview.enums.DrawingTool;
 import com.byox.drawview.sticker.Sticker;
 import com.byox.drawview.sticker.TextSticker;
+import com.byox.drawview.utils.SerializableMatrix;
 import com.byox.drawview.utils.SerializablePaint;
 import com.byox.drawview.utils.SerializablePath;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 
 /**
@@ -30,10 +33,10 @@ public class DrawMove implements Serializable {
     //private List<SerializablePath> mDrawingPathList;
     private SerializablePath mDrawingPath;
     private float mStartX, mStartY, mEndX, mEndY;
-    private TextSticker sticker;
+    private transient TextSticker sticker;
     private String stickerText;
     private Boolean isTextDone = false;
-    private Matrix mBackgroundMatrix;
+    private SerializableMatrix mBackgroundMatrix;
     private byte[] mBackgroundImage;
 
     // METHODS
@@ -175,7 +178,7 @@ public class DrawMove implements Serializable {
         } else throw new RuntimeException("Create new instance of DrawMove first!");
     }
 
-    public DrawMove setBackgroundImage(byte[] backgroundImage, Matrix backgroundMatrix) {
+    public DrawMove setBackgroundImage(byte[] backgroundImage, SerializableMatrix backgroundMatrix) {
         if (mSingleton != null) {
             mSingleton.mBackgroundImage = backgroundImage;
             mSingleton.mBackgroundMatrix = backgroundMatrix;

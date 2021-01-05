@@ -8,8 +8,8 @@ import android.graphics.RectF;
  */
 
 public class MatrixUtils {
-    public static Matrix GetCenterCropMatrix(RectF srcSize, RectF destSize){
-        Matrix matrix = new Matrix();
+    public static SerializableMatrix GetCenterCropMatrix(RectF srcSize, RectF destSize){
+        SerializableMatrix matrix = new SerializableMatrix();
         float scale = Math.max(destSize.width() / srcSize.width(),
                 destSize.height() / srcSize.height());
         matrix.setTranslate(-(destSize.width() / 2), - (destSize.height() / 2));

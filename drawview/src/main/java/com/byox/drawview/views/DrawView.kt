@@ -28,10 +28,7 @@ import com.byox.drawview.R
 import com.byox.drawview.dictionaries.DrawMove
 import com.byox.drawview.enums.*
 import com.byox.drawview.sticker.*
-import com.byox.drawview.utils.BitmapUtils
-import com.byox.drawview.utils.MatrixUtils
-import com.byox.drawview.utils.SerializablePaint
-import com.byox.drawview.utils.SerializablePath
+import com.byox.drawview.utils.*
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.*
@@ -1092,7 +1089,7 @@ class DrawView : FrameLayout, OnTouchListener {
         if (mDrawMoveHistoryIndex >= -1 &&
                 mDrawMoveHistoryIndex < mDrawMoveHistory.size - 1) mDrawMoveHistory = mDrawMoveHistory.subList(0, mDrawMoveHistoryIndex + 1)
         val bitmap = BitmapUtils.GetBitmapForDrawView(this, backgroundImage, backgroundType, 50)
-        var matrix = Matrix()
+        var matrix = SerializableMatrix()
         when (backgroundScale) {
             BackgroundScale.CENTER_CROP -> matrix = MatrixUtils.GetCenterCropMatrix(RectF(0f, 0f,
                     bitmap.width.toFloat(),
@@ -1139,7 +1136,7 @@ class DrawView : FrameLayout, OnTouchListener {
      */
     fun setBackgroundImage(backgroundImage: Any,
                            backgroundType: BackgroundType,
-                           backgroundMatrix: Matrix): DrawView {
+                           backgroundMatrix: SerializableMatrix): DrawView {
         if (backgroundImage !is File && backgroundImage !is Bitmap &&
                 backgroundImage !is ByteArray) {
             throw RuntimeException("Background image must be File, Bitmap or ByteArray")
