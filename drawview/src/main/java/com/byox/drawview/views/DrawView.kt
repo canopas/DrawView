@@ -669,15 +669,20 @@ class DrawView : FrameLayout, OnTouchListener {
      * @return if the draw view can be restarted
      */
     fun restartDrawing(): Boolean {
-        if (mDrawMoveHistory != null) {
-            mStickerView.remove()
+        mStickerView.remove()
+
+        mDrawMoveHistoryIndex = if (mDrawMoveBackgroundIndex != -1 && mDrawMoveHistory.isNotEmpty()) {
+            val image = mDrawMoveHistory[mDrawMoveBackgroundIndex]
             mDrawMoveHistory.clear()
-            mDrawMoveHistoryIndex = -1
-            mDrawMoveBackgroundIndex = -1
-            invalidate()
-            onDrawViewListener?.onClearDrawing()
-            return true
+            mDrawMoveHistory.add(image)
+            0
+
+        } else {
+            mDrawMoveHistory.clear()
+            -1
         }
+        invalidate()
+        onDrawViewListener?.onClearDrawing()
         invalidate()
         return false
     }
@@ -714,10 +719,8 @@ class DrawView : FrameLayout, OnTouchListener {
      * @return if the view can do the undo action
      */
     fun undo(): Boolean {
-        if (mDrawMoveHistoryIndex > -1 &&
-                mDrawMoveHistory.size > 0) {
+        if (canUndo()) {
             mDrawMoveHistoryIndex--
-            mDrawMoveBackgroundIndex = -1
             val lastText = findLastText()
             if (lastText != null && !lastText.isTextDone) {
                 mStickerView.remove()
@@ -740,8 +743,8 @@ class DrawView : FrameLayout, OnTouchListener {
      * @return if the view can do the undo action
      */
     fun canUndo(): Boolean {
-        return mDrawMoveHistoryIndex > -1 &&
-                mDrawMoveHistory.size > 0
+        return mDrawMoveHistoryIndex > 0 &&
+                mDrawMoveHistory.size > 1
     }
 
     /**
@@ -1218,8 +1221,9 @@ class DrawView : FrameLayout, OnTouchListener {
      * @param drawMove the DrawMove that contains the background image
      * @param canvas   tha DrawView canvas
      */
-    private fun drawBackgroundImage(drawMove: DrawMove?, canvas: Canvas) {
-        canvas.drawBitmap(BitmapFactory.decodeByteArray(drawMove!!.backgroundImage, 0,
+    private fun drawBackgroundImage(drawMove: DrawMove, canvas: Canvas) {
+        if (drawMove.backgroundImage.isEmpty()) return
+        canvas.drawBitmap(BitmapFactory.decodeByteArray(drawMove.backgroundImage, 0,
                 drawMove.backgroundImage.size), drawMove.backgroundMatrix, null)
     }
 
