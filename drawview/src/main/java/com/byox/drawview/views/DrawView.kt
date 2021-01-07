@@ -24,6 +24,7 @@ import android.view.animation.Animation
 import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.cardview.widget.CardView
+import androidx.core.graphics.values
 import com.byox.drawview.R
 import com.byox.drawview.dictionaries.DrawMove
 import com.byox.drawview.enums.*
@@ -589,7 +590,7 @@ class DrawView : FrameLayout, OnTouchListener {
 
             mBackgroundPaint = SerializablePaint()
             mBackgroundPaint?.style = Paint.Style.FILL
-            mBackgroundPaint?.color = if (backgroundDrawColor != -1) backgroundDrawColor else Color.TRANSPARENT
+            mBackgroundPaint?.color = if (backgroundDrawColor != -1) backgroundDrawColor else Color.WHITE
             drawingTool = DrawingTool.values()[typedArray.getInteger(R.styleable.DrawView_dv_draw_tool, 0)]
             drawingMode = DrawingMode.values()[typedArray.getInteger(R.styleable.DrawView_dv_draw_mode, 0)]
             isZoomEnabled = typedArray.getBoolean(R.styleable.DrawView_dv_draw_enable_zoom, false)
@@ -697,12 +698,10 @@ class DrawView : FrameLayout, OnTouchListener {
                 mDrawMoveHistory.clear()
                 mDrawMoveHistory.add(drawMove)
                 mDrawMoveHistoryIndex = 0
-                mDrawMoveBackgroundIndex = 0
                 invalidate()
             } else {
                 mDrawMoveHistory.clear()
                 mDrawMoveHistoryIndex = -1
-                mDrawMoveBackgroundIndex = -1
                 invalidate()
             }
             //            if (onDrawViewListener != null)
@@ -724,11 +723,6 @@ class DrawView : FrameLayout, OnTouchListener {
             val lastText = findLastText()
             if (lastText != null && !lastText.isTextDone) {
                 mStickerView.remove()
-            }
-            for (i in 0 until mDrawMoveHistoryIndex + 1) {
-                if (mDrawMoveHistory[i].backgroundImage != null) {
-                    mDrawMoveBackgroundIndex = i
-                }
             }
             invalidate()
             return true
@@ -753,14 +747,8 @@ class DrawView : FrameLayout, OnTouchListener {
      * @return if the view can do the redo action
      */
     fun redo(): Boolean {
-        if (mDrawMoveHistoryIndex <= mDrawMoveHistory.size - 1) {
+        if (canRedo()) {
             mDrawMoveHistoryIndex++
-            mDrawMoveBackgroundIndex = -1
-            for (i in 0 until mDrawMoveHistoryIndex + 1) {
-                if (mDrawMoveHistory[i].backgroundImage != null) {
-                    mDrawMoveBackgroundIndex = i
-                }
-            }
             invalidate()
             return true
         }
@@ -792,16 +780,14 @@ class DrawView : FrameLayout, OnTouchListener {
             DrawingCapture.BITMAP -> {
                 result = arrayOfNulls(2)
                 result[0] = combinedBitmap
-                result[1] = if (mBackgroundPaint!!.color == Color.TRANSPARENT) "PNG" else "JPG"
+                result[1] = "JPG"
             }
             DrawingCapture.BYTES -> {
                 result = arrayOfNulls(2)
                 val stream = ByteArrayOutputStream()
-                combinedBitmap.compress(
-                        if (mBackgroundPaint!!.color == Color.TRANSPARENT) Bitmap.CompressFormat.PNG else Bitmap.CompressFormat.JPEG,
-                        100, stream)
+                combinedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
                 result[0] = stream.toByteArray()
-                result[1] = if (mBackgroundPaint!!.color == Color.TRANSPARENT) "PNG" else "JPG"
+                result[1] = "JPG"
             }
         }
         return result
