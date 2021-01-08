@@ -123,7 +123,7 @@ class DrawView : FrameLayout, OnTouchListener {
     // VIEWS
     private var mZoomRegionCardView: CardView? = null
     private var mZoomRegionView: ZoomRegionView? = null
-    private var cachedImageBitmap: Bitmap? = null
+
     /**
      * 返回绘制历史记录状态
      *
@@ -386,8 +386,6 @@ class DrawView : FrameLayout, OnTouchListener {
     }
 
     override fun onSaveInstanceState(): Parcelable? {
-        cachedImageBitmap?.recycle()
-
         val bundle = Bundle()
         bundle.putParcelable("superState", super.onSaveInstanceState())
         bundle.putInt("drawMoveHistorySize", mDrawMoveHistory.size)
@@ -794,11 +792,12 @@ class DrawView : FrameLayout, OnTouchListener {
         get() {
             if (mDrawMoveBackgroundIndex != -1 && mDrawMoveHistory.size > 0) {
                 val drawMove = mDrawMoveHistory[mDrawMoveBackgroundIndex]
-                val imageBitmap = cachedImageBitmap
+                val imageBitmap = drawMove.cachedBackgroundImageBitmap
                 if (imageBitmap == null) {
                     val bitmap = BitmapFactory.decodeByteArray(drawMove.backgroundImage, 0,
                             drawMove.backgroundImage.size)
-                    cachedImageBitmap = bitmap
+                    drawMove.cachedBackgroundImageBitmap = bitmap
+                    return bitmap
                 } else {
                     return imageBitmap
                 }
@@ -1115,9 +1114,9 @@ class DrawView : FrameLayout, OnTouchListener {
         val byteArrayOutputStream = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
         val bitmapArray = byteArrayOutputStream.toByteArray()
-        cachedImageBitmap = bitmap
         mDrawMoveHistory.add(DrawMove.newInstance()
                 .setBackgroundImage(bitmapArray, matrix)
+                .setCachedBackgroundImageBitmap(bitmap)
                 .setPaint(SerializablePaint()))
 
         val left = (width - bitmap.width) / 2
@@ -1160,10 +1159,10 @@ class DrawView : FrameLayout, OnTouchListener {
         val byteArrayOutputStream = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
         val bitmapArray = byteArrayOutputStream.toByteArray()
-        cachedImageBitmap = bitmap
 
         mDrawMoveHistory.add(DrawMove.newInstance()
                 .setBackgroundImage(bitmapArray, backgroundMatrix)
+                .setCachedBackgroundImageBitmap(bitmap)
                 .setPaint(SerializablePaint()))
         mDrawMoveHistoryIndex++
         mDrawMoveBackgroundIndex = mDrawMoveHistoryIndex
