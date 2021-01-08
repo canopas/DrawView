@@ -194,8 +194,6 @@ class DrawView : FrameLayout, OnTouchListener {
             canvas.scale(mZoomFactor, mZoomFactor, mZoomCenterX, mZoomCenterY)
         }
 
-        mContentCanvas.drawRect(0f, 0f, mContentBitmap!!.width.toFloat(), mContentBitmap!!.height.toFloat(), mBackgroundPaint!!)
-
         if (mDrawMoveBackgroundIndex != -1 && mDrawMoveHistory.size > 0) {
             val drawMove = mDrawMoveHistory[mDrawMoveBackgroundIndex]
             drawBackgroundImage(drawMove, canvas)
@@ -577,9 +575,7 @@ class DrawView : FrameLayout, OnTouchListener {
 
             if (background != null && !isForCamera) {
                 backgroundDrawColor = (background as ColorDrawable).color
-                setBackgroundColor(Color.TRANSPARENT)
             } else {
-                setBackgroundColor(Color.TRANSPARENT)
                 backgroundDrawColor = (background as ColorDrawable).color
                 if (!isForCamera) setBackgroundResource(R.drawable.drawable_transparent_pattern)
             }
