@@ -3,6 +3,8 @@ package com.byox.drawview.dictionaries;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 
+import com.byox.drawview.enums.BackgroundScale;
+import com.byox.drawview.enums.BackgroundType;
 import com.byox.drawview.enums.DrawingMode;
 import com.byox.drawview.enums.DrawingTool;
 import com.byox.drawview.sticker.TextSticker;
@@ -28,6 +30,8 @@ public class DrawMove implements Serializable {
     private SerializablePaint mPaint;
     private DrawingMode mDrawingMode = null;
     private DrawingTool mDrawingTool = null;
+    private BackgroundType backgroundType = null;
+    private BackgroundScale backgroundScale = null;
     //private List<SerializablePath> mDrawingPathList;
     private SerializablePath mDrawingPath;
     private float mStartX, mStartY, mEndX, mEndY;
@@ -35,7 +39,7 @@ public class DrawMove implements Serializable {
     private String stickerText;
     private Boolean isTextDone = false;
     private SerializableMatrix mBackgroundMatrix;
-    private byte[] mBackgroundImageByte;
+    private String mBackgroundImagePath;
     public transient Bitmap cachedBackgroundImageBitmap;
 
     // METHODS
@@ -93,8 +97,8 @@ public class DrawMove implements Serializable {
         return mBackgroundMatrix;
     }
 
-    public byte[] getBackgroundImage() {
-        return mBackgroundImageByte;
+    public String getBackgroundImage() {
+        return mBackgroundImagePath;
     }
 
     public Boolean isTextDone() {
@@ -177,10 +181,9 @@ public class DrawMove implements Serializable {
         } else throw new RuntimeException("Create new instance of DrawMove first!");
     }
 
-    public DrawMove setBackgroundImage(byte[] imageByte, SerializableMatrix backgroundMatrix) {
+    public DrawMove setBackgroundImage(String imagePath) {
         if (mSingleton != null) {
-            mSingleton.mBackgroundImageByte = imageByte;
-            mSingleton.mBackgroundMatrix = backgroundMatrix;
+            mSingleton.mBackgroundImagePath = imagePath;
             return mSingleton;
         } else throw new RuntimeException("Create new instance of DrawMove first!");
     }
@@ -188,5 +191,26 @@ public class DrawMove implements Serializable {
     public DrawMove setCachedBackgroundImageBitmap(Bitmap cachedBackgroundImageBitmap) {
         this.cachedBackgroundImageBitmap = cachedBackgroundImageBitmap;
         return mSingleton;
+    }
+
+    public BackgroundScale getBackgroundScale() {
+        return backgroundScale;
+    }
+
+    public BackgroundType getBackgroundType() {
+        return backgroundType;
+    }
+
+    public void setmBackgroundMatrix(SerializableMatrix mBackgroundMatrix) {
+        this.mBackgroundMatrix = mBackgroundMatrix;
+    }
+
+    public DrawMove setBackgroundImage(String imagePath, BackgroundType backgroundType, BackgroundScale backgroundScale) {
+        if (mSingleton != null) {
+            mSingleton.mBackgroundImagePath = imagePath;
+            mSingleton.backgroundType = backgroundType;
+            mSingleton.backgroundScale = backgroundScale;
+            return mSingleton;
+        } else throw new RuntimeException("Create new instance of DrawMove first!");
     }
 }

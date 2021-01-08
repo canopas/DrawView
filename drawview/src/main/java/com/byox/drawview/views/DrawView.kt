@@ -794,9 +794,7 @@ class DrawView : FrameLayout, OnTouchListener {
                 val drawMove = mDrawMoveHistory[mDrawMoveBackgroundIndex]
                 val imageBitmap = drawMove.cachedBackgroundImageBitmap
                 if (imageBitmap == null) {
-                    val bitmap = BitmapFactory.decodeByteArray(drawMove.backgroundImage, 0,
-                            drawMove.backgroundImage.size)
-                    drawMove.cachedBackgroundImageBitmap = bitmap
+                    val bitmap = generateBitmap(drawMove)
                     return bitmap
                 } else {
                     return imageBitmap
@@ -1065,30 +1063,14 @@ class DrawView : FrameLayout, OnTouchListener {
         return this
     }
 
-    /**
-     * Set the background image for the DrawView. This image can be a File, Bitmap or ByteArray
-     *
-     * @param backgroundImage File that contains the background image
-     * @param backgroundType  Background image type (File, Bitmap or ByteArray)
-     * @param backgroundScale Background scale (Center crop, center inside, fit xy, fit top or fit bottom)
-     * @return this instance of the view
-     */
-    fun setBackgroundImage(backgroundImage: Any,
-                           backgroundType: BackgroundType,
-                           backgroundScale: BackgroundScale): DrawView {
-        if (backgroundImage !is File && backgroundImage !is Bitmap &&
-                backgroundImage !is ByteArray) {
-            throw RuntimeException("Background image must be File, Bitmap or ByteArray")
-        }
-        if (isForCamera) {
-            Log.i(TAG, "You can't set a background image if your draw view is for camera")
-            return this
-        }
-        if (onDrawViewListener != null) onDrawViewListener?.onStartDrawing()
-        if (mDrawMoveHistoryIndex >= -1 &&
-                mDrawMoveHistoryIndex < mDrawMoveHistory.size - 1) mDrawMoveHistory = mDrawMoveHistory.subList(0, mDrawMoveHistoryIndex + 1)
+    fun generateBitmap(drawMove: DrawMove): Bitmap {
+        val backgroundImage = File(drawMove.backgroundImage)
+        val backgroundScale = drawMove.backgroundScale
+        val backgroundType = drawMove.backgroundType
+
         val bitmap = BitmapUtils.GetBitmapForDrawView(this, backgroundImage, backgroundType, 50)
         var matrix = SerializableMatrix()
+
         when (backgroundScale) {
             BackgroundScale.CENTER_CROP -> matrix = MatrixUtils.GetCenterCropMatrix(RectF(0f, 0f,
                     bitmap.width.toFloat(),
@@ -1113,23 +1095,41 @@ class DrawView : FrameLayout, OnTouchListener {
         }
         val byteArrayOutputStream = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
-        val bitmapArray = byteArrayOutputStream.toByteArray()
-        mDrawMoveHistory.add(DrawMove.newInstance()
-                .setBackgroundImage(bitmapArray, matrix)
-                .setCachedBackgroundImageBitmap(bitmap)
-                .setPaint(SerializablePaint()))
-
         val left = (width - bitmap.width) / 2
         val top = (height - bitmap.height) / 2
         val bottom = bitmap.height + top
         val right = bitmap.width + left
 
         backgroundRect = Rect(left, top, right, bottom)
+        drawMove.setCachedBackgroundImageBitmap(bitmap)
+        drawMove.setmBackgroundMatrix(matrix)
+
+        return bitmap
+    }
+
+    /**
+     * Set the background image for the DrawView. This image can be a File, Bitmap or ByteArray
+     *
+     * @param backgroundImage File that contains the background image
+     * @param backgroundType  Background image type (File, Bitmap or ByteArray)
+     * @param backgroundScale Background scale (Center crop, center inside, fit xy, fit top or fit bottom)
+     * @return this instance of the view
+     */
+    fun setBackgroundImage(backgroundImage: File,
+                           backgroundType: BackgroundType,
+                           backgroundScale: BackgroundScale): DrawView {
+        if (onDrawViewListener != null) onDrawViewListener?.onStartDrawing()
+        if (mDrawMoveHistoryIndex >= -1 &&
+                mDrawMoveHistoryIndex < mDrawMoveHistory.size - 1) mDrawMoveHistory = mDrawMoveHistory.subList(0, mDrawMoveHistoryIndex + 1)
+
+        mDrawMoveHistory.add(DrawMove.newInstance()
+                .setBackgroundImage(backgroundImage.absolutePath, backgroundType, backgroundScale)
+                .setPaint(SerializablePaint()))
 
         mDrawMoveHistoryIndex++
         mDrawMoveBackgroundIndex = mDrawMoveHistoryIndex
-        if (onDrawViewListener != null) onDrawViewListener?.onEndDrawing()
         invalidate()
+        if (onDrawViewListener != null) onDrawViewListener?.onEndDrawing()
         return this
     }
 
@@ -1141,35 +1141,35 @@ class DrawView : FrameLayout, OnTouchListener {
      * @param backgroundMatrix Background matrix for the image
      * @return this instance of the view
      */
-    fun setBackgroundImage(backgroundImage: Any,
-                           backgroundType: BackgroundType,
-                           backgroundMatrix: SerializableMatrix): DrawView {
-        if (backgroundImage !is File && backgroundImage !is Bitmap &&
-                backgroundImage !is ByteArray) {
-            throw RuntimeException("Background image must be File, Bitmap or ByteArray")
-        }
-        if (isForCamera) {
-            Log.i(TAG, "You can't set a background image if your draw view is for camera")
-            return this
-        }
-        if (onDrawViewListener != null) onDrawViewListener?.onStartDrawing()
-        if (mDrawMoveHistoryIndex >= -1 &&
-                mDrawMoveHistoryIndex < mDrawMoveHistory.size - 1) mDrawMoveHistory = mDrawMoveHistory.subList(0, mDrawMoveHistoryIndex + 1)
-        val bitmap = BitmapUtils.GetBitmapForDrawView(this, backgroundImage, backgroundType, 50)
-        val byteArrayOutputStream = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
-        val bitmapArray = byteArrayOutputStream.toByteArray()
-
-        mDrawMoveHistory.add(DrawMove.newInstance()
-                .setBackgroundImage(bitmapArray, backgroundMatrix)
-                .setCachedBackgroundImageBitmap(bitmap)
-                .setPaint(SerializablePaint()))
-        mDrawMoveHistoryIndex++
-        mDrawMoveBackgroundIndex = mDrawMoveHistoryIndex
-        onDrawViewListener?.onEndDrawing()
-        invalidate()
-        return this
-    }
+//    fun setBackgroundImage(backgroundImage: File,
+//                           backgroundType: BackgroundType,
+//                           backgroundMatrix: SerializableMatrix): DrawView {
+//        if (backgroundImage !is File && backgroundImage !is Bitmap &&
+//                backgroundImage !is ByteArray) {
+//            throw RuntimeException("Background image must be File, Bitmap or ByteArray")
+//        }
+//        if (isForCamera) {
+//            Log.i(TAG, "You can't set a background image if your draw view is for camera")
+//            return this
+//        }
+//        if (onDrawViewListener != null) onDrawViewListener?.onStartDrawing()
+//        if (mDrawMoveHistoryIndex >= -1 &&
+//                mDrawMoveHistoryIndex < mDrawMoveHistory.size - 1) mDrawMoveHistory = mDrawMoveHistory.subList(0, mDrawMoveHistoryIndex + 1)
+//        val bitmap = BitmapUtils.GetBitmapForDrawView(this, backgroundImage, backgroundType, 50)
+//        val byteArrayOutputStream = ByteArrayOutputStream()
+//        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
+//        val bitmapArray = byteArrayOutputStream.toByteArray()
+//
+//        mDrawMoveHistory.add(DrawMove.newInstance()
+//                .setBackgroundImage(backgroundImage.pabitmapArray, backgroundMatrix)
+//                .setCachedBackgroundImageBitmap(bitmap)
+//                .setPaint(SerializablePaint()))
+//        mDrawMoveHistoryIndex++
+//        mDrawMoveBackgroundIndex = mDrawMoveHistoryIndex
+//        onDrawViewListener?.onEndDrawing()
+//        invalidate()
+//        return this
+//    }
 
     /**
      * Set the max zoom factor of the DrawView
