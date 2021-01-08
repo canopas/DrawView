@@ -87,7 +87,6 @@ class DrawView : FrameLayout, OnTouchListener {
         private set
     private var backgroundDrawColor = -1
 
-    private val mBackgroundImageBitmap: Bitmap? = null
     private var mCanvasClipBounds: Rect? = null
 
     private var mContentBitmap: Bitmap? = null
@@ -194,6 +193,8 @@ class DrawView : FrameLayout, OnTouchListener {
             canvas.save()
             canvas.scale(mZoomFactor, mZoomFactor, mZoomCenterX, mZoomCenterY)
         }
+
+        mContentCanvas.drawRect(0f, 0f, mContentBitmap!!.width.toFloat(), mContentBitmap!!.height.toFloat(), mBackgroundPaint!!)
 
         if (mDrawMoveBackgroundIndex != -1 && mDrawMoveHistory.size > 0) {
             val drawMove = mDrawMoveHistory[mDrawMoveBackgroundIndex]
@@ -574,14 +575,9 @@ class DrawView : FrameLayout, OnTouchListener {
 
             mInitialDrawingOrientation = DrawingOrientation.values()[orientation]
 
-            if (background != null && !isForCamera) try {
+            if (background != null && !isForCamera) {
                 backgroundDrawColor = (background as ColorDrawable).color
                 setBackgroundColor(Color.TRANSPARENT)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                setBackgroundColor(Color.TRANSPARENT)
-                backgroundDrawColor = (background as ColorDrawable).color
-                setBackgroundResource(R.drawable.drawable_transparent_pattern)
             } else {
                 setBackgroundColor(Color.TRANSPARENT)
                 backgroundDrawColor = (background as ColorDrawable).color
@@ -780,14 +776,16 @@ class DrawView : FrameLayout, OnTouchListener {
             DrawingCapture.BITMAP -> {
                 result = arrayOfNulls(2)
                 result[0] = combinedBitmap
-                result[1] = "JPG"
+                result[1] = if (mBackgroundPaint!!.color == Color.TRANSPARENT) "PNG" else "JPG"
             }
             DrawingCapture.BYTES -> {
                 result = arrayOfNulls(2)
                 val stream = ByteArrayOutputStream()
-                combinedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
+                combinedBitmap.compress(
+                        if (mBackgroundPaint!!.color == Color.TRANSPARENT) Bitmap.CompressFormat.PNG else Bitmap.CompressFormat.JPEG,
+                        100, stream)
                 result[0] = stream.toByteArray()
-                result[1] = "JPG"
+                result[1] = if (mBackgroundPaint!!.color == Color.TRANSPARENT) "PNG" else "JPG"
             }
         }
         return result
