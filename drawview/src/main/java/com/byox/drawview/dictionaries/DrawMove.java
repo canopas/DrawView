@@ -35,7 +35,8 @@ public class DrawMove implements Serializable {
     private String stickerText;
     private Boolean isTextDone = false;
     private SerializableMatrix mBackgroundMatrix;
-    private Bitmap mBackgroundImage;
+    private byte[] mBackgroundImageByte;
+    transient private Bitmap cachedImageBitmap;
 
     // METHODS
     private DrawMove() {
@@ -92,8 +93,16 @@ public class DrawMove implements Serializable {
         return mBackgroundMatrix;
     }
 
-    public Bitmap getBackgroundImage() {
-        return mBackgroundImage;
+    public byte[] getBackgroundImage() {
+        return mBackgroundImageByte;
+    }
+
+    public Bitmap getCachedImageBitmap() {
+        return cachedImageBitmap;
+    }
+
+    public void setCachedImageBitmap(Bitmap cachedImageBitmap) {
+        this.cachedImageBitmap = cachedImageBitmap;
     }
 
     public Boolean isTextDone() {
@@ -176,9 +185,10 @@ public class DrawMove implements Serializable {
         } else throw new RuntimeException("Create new instance of DrawMove first!");
     }
 
-    public DrawMove setBackgroundImage(Bitmap backgroundImage, SerializableMatrix backgroundMatrix) {
+    public DrawMove setBackgroundImage(Bitmap backgroundImage, byte[] imageByte, SerializableMatrix backgroundMatrix) {
         if (mSingleton != null) {
-            mSingleton.mBackgroundImage = backgroundImage;
+            mSingleton.mBackgroundImageByte = imageByte;
+            mSingleton.cachedImageBitmap = backgroundImage;
             mSingleton.mBackgroundMatrix = backgroundMatrix;
             return mSingleton;
         } else throw new RuntimeException("Create new instance of DrawMove first!");
