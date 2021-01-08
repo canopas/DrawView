@@ -1,6 +1,5 @@
 package com.byox.drawview.dictionaries;
 
-import android.graphics.Bitmap;
 import android.graphics.Matrix;
 
 import com.byox.drawview.enums.DrawingMode;
@@ -36,7 +35,6 @@ public class DrawMove implements Serializable {
     private Boolean isTextDone = false;
     private SerializableMatrix mBackgroundMatrix;
     private byte[] mBackgroundImageByte;
-    transient private Bitmap cachedImageBitmap;
 
     // METHODS
     private DrawMove() {
@@ -95,14 +93,6 @@ public class DrawMove implements Serializable {
 
     public byte[] getBackgroundImage() {
         return mBackgroundImageByte;
-    }
-
-    public Bitmap getCachedImageBitmap() {
-        return cachedImageBitmap;
-    }
-
-    public void setCachedImageBitmap(Bitmap cachedImageBitmap) {
-        this.cachedImageBitmap = cachedImageBitmap;
     }
 
     public Boolean isTextDone() {
@@ -185,10 +175,9 @@ public class DrawMove implements Serializable {
         } else throw new RuntimeException("Create new instance of DrawMove first!");
     }
 
-    public DrawMove setBackgroundImage(Bitmap backgroundImage, byte[] imageByte, SerializableMatrix backgroundMatrix) {
+    public DrawMove setBackgroundImage(byte[] imageByte, SerializableMatrix backgroundMatrix) {
         if (mSingleton != null) {
             mSingleton.mBackgroundImageByte = imageByte;
-            mSingleton.cachedImageBitmap = backgroundImage;
             mSingleton.mBackgroundMatrix = backgroundMatrix;
             return mSingleton;
         } else throw new RuntimeException("Create new instance of DrawMove first!");
