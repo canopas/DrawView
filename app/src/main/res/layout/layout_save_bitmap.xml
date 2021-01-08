@@ -10,8 +10,7 @@
         android:layout_height="248dp"
         android:layout_gravity="center_horizontal"
         android:layout_margin="12dp"
-        android:background="@drawable/drawable_transparent_dialog_pattern"
-        android:scaleType="centerInside" />
+        android:background="@drawable/drawable_transparent_dialog_pattern" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"

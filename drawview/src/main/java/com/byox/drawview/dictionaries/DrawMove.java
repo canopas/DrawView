@@ -1,17 +1,15 @@
 package com.byox.drawview.dictionaries;
 
+import android.graphics.Bitmap;
 import android.graphics.Matrix;
 
 import com.byox.drawview.enums.DrawingMode;
 import com.byox.drawview.enums.DrawingTool;
-import com.byox.drawview.sticker.Sticker;
 import com.byox.drawview.sticker.TextSticker;
 import com.byox.drawview.utils.SerializableMatrix;
 import com.byox.drawview.utils.SerializablePaint;
 import com.byox.drawview.utils.SerializablePath;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.Serializable;
 
 /**
@@ -37,7 +35,7 @@ public class DrawMove implements Serializable {
     private String stickerText;
     private Boolean isTextDone = false;
     private SerializableMatrix mBackgroundMatrix;
-    private byte[] mBackgroundImage;
+    private Bitmap mBackgroundImage;
 
     // METHODS
     private DrawMove() {
@@ -94,7 +92,7 @@ public class DrawMove implements Serializable {
         return mBackgroundMatrix;
     }
 
-    public byte[] getBackgroundImage() {
+    public Bitmap getBackgroundImage() {
         return mBackgroundImage;
     }
 
@@ -178,7 +176,7 @@ public class DrawMove implements Serializable {
         } else throw new RuntimeException("Create new instance of DrawMove first!");
     }
 
-    public DrawMove setBackgroundImage(byte[] backgroundImage, SerializableMatrix backgroundMatrix) {
+    public DrawMove setBackgroundImage(Bitmap backgroundImage, SerializableMatrix backgroundMatrix) {
         if (mSingleton != null) {
             mSingleton.mBackgroundImage = backgroundImage;
             mSingleton.mBackgroundMatrix = backgroundMatrix;

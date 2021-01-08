@@ -8,22 +8,16 @@ import android.graphics.Paint;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-
-import androidx.annotation.NonNull;
-
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
-
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.OvershootInterpolator;
-import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.byox.drawview.enums.BackgroundScale;
 import com.byox.drawview.enums.BackgroundType;
@@ -37,6 +31,8 @@ import com.byox.drawviewproject.dialogs.SaveBitmapDialog;
 import com.byox.drawviewproject.dialogs.SelectChoiceDialog;
 import com.byox.drawviewproject.dialogs.SelectImageDialog;
 import com.byox.drawviewproject.utils.AnimateUtils;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.io.File;
 
@@ -61,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mFabClearDraw = (FloatingActionButton) findViewById(R.id.fab_clear);
+        mFabClearDraw = findViewById(R.id.fab_clear);
 
         setupToolbar();
         setupDrawView();
@@ -148,14 +144,14 @@ public class MainActivity extends AppCompatActivity {
 
     // METHODS
     private void setupToolbar() {
-        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        mToolbar = findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
         assert getSupportActionBar() != null;
         getSupportActionBar().setTitle(R.string.app_name);
     }
 
     private void setupDrawView() {
-        mDrawView = (DrawView) findViewById(R.id.draw_view);
+        mDrawView = findViewById(R.id.draw_view);
     }
 
     private void setListeners() {
@@ -292,7 +288,7 @@ public class MainActivity extends AppCompatActivity {
         selectImageDialog.setOnImageSelectListener(new SelectImageDialog.OnImageSelectListener() {
             @Override
             public void onSelectImage(File imageFile) {
-                mDrawView.setBackgroundImage(imageFile, BackgroundType.FILE, BackgroundScale.CENTER_CROP);
+                mDrawView.setBackgroundImage(imageFile, BackgroundType.FILE, BackgroundScale.CENTER_INSIDE);
             }
 
             @Override

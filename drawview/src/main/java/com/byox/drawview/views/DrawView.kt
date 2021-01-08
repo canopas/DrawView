@@ -24,7 +24,6 @@ import android.view.animation.Animation
 import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.cardview.widget.CardView
-import androidx.core.graphics.values
 import com.byox.drawview.R
 import com.byox.drawview.dictionaries.DrawMove
 import com.byox.drawview.enums.*
@@ -90,6 +89,7 @@ class DrawView : FrameLayout, OnTouchListener {
 
     private val mBackgroundImageBitmap: Bitmap? = null
     private var mCanvasClipBounds: Rect? = null
+
     private var mContentBitmap: Bitmap? = null
     private var mContentCanvas: Canvas? = null
     var isZoomEnabled = false
@@ -119,6 +119,7 @@ class DrawView : FrameLayout, OnTouchListener {
     private var mEraserXefferMode: PorterDuffXfermode? = null
     private var mBackgroundPaint: SerializablePaint? = null
     private var mInvalidateRect: Rect? = null
+    private var backgroundRect: Rect? = null
 
     // VIEWS
     private var mZoomRegionCardView: CardView? = null
@@ -194,12 +195,11 @@ class DrawView : FrameLayout, OnTouchListener {
             canvas.scale(mZoomFactor, mZoomFactor, mZoomCenterX, mZoomCenterY)
         }
 
-        // Draw canvas background
-        mContentCanvas.drawRect(0f, 0f, mContentBitmap!!.width.toFloat(), mContentBitmap!!.height.toFloat(), mBackgroundPaint!!)
         if (mDrawMoveBackgroundIndex != -1 && mDrawMoveHistory.size > 0) {
             val drawMove = mDrawMoveHistory[mDrawMoveBackgroundIndex]
             drawBackgroundImage(drawMove, canvas)
         }
+
         for (i in 0 until mDrawMoveHistoryIndex + 1) {
             val drawMove = mDrawMoveHistory[i]
             when (drawMove.drawingMode) {
@@ -590,7 +590,7 @@ class DrawView : FrameLayout, OnTouchListener {
 
             mBackgroundPaint = SerializablePaint()
             mBackgroundPaint?.style = Paint.Style.FILL
-            mBackgroundPaint?.color = if (backgroundDrawColor != -1) backgroundDrawColor else Color.WHITE
+            mBackgroundPaint?.color = if (backgroundDrawColor != -1) backgroundDrawColor else Color.TRANSPARENT
             drawingTool = DrawingTool.values()[typedArray.getInteger(R.styleable.DrawView_dv_draw_tool, 0)]
             drawingMode = DrawingMode.values()[typedArray.getInteger(R.styleable.DrawView_dv_draw_mode, 0)]
             isZoomEnabled = typedArray.getBoolean(R.styleable.DrawView_dv_draw_enable_zoom, false)
@@ -774,8 +774,8 @@ class DrawView : FrameLayout, OnTouchListener {
     fun createCapture(drawingCapture: DrawingCapture?): Array<Any?>? {
         var result: Array<Any?>? = null
         val bgBimtap = backgroundImageBitmap
-        val combinedBitmap = if (bgBimtap != null) BitmapUtils.GetCombinedBitmaps(bgBimtap, mContentBitmap,
-                mContentBitmap!!.width, mContentBitmap!!.height) else mContentBitmap!!
+        val combinedBitmap = if (bgBimtap != null) BitmapUtils.GetCombinedBitmaps(bgBimtap, backgroundImageMatrix, mContentBitmap,
+                backgroundRect!!, mContentBitmap!!.width, mContentBitmap!!.height) else mContentBitmap!!
         when (drawingCapture) {
             DrawingCapture.BITMAP -> {
                 result = arrayOfNulls(2)
@@ -794,13 +794,20 @@ class DrawView : FrameLayout, OnTouchListener {
     }
 
     private val backgroundImageBitmap: Bitmap?
-        private get() {
-            if (mDrawMoveBackgroundIndex != -1 && mDrawMoveHistory != null && mDrawMoveHistory.size > 0) {
+        get() {
+            if (mDrawMoveBackgroundIndex != -1 && mDrawMoveHistory.size > 0) {
                 val drawMove = mDrawMoveHistory[mDrawMoveBackgroundIndex]
-                return BitmapFactory.decodeByteArray(drawMove.backgroundImage, 0,
-                        drawMove.backgroundImage.size)
+                return drawMove.backgroundImage
             }
             return null
+        }
+    private val backgroundImageMatrix: Matrix
+        get() {
+            if (mDrawMoveBackgroundIndex != -1 && mDrawMoveHistory.size > 0) {
+                val drawMove = mDrawMoveHistory[mDrawMoveBackgroundIndex]
+                return drawMove.backgroundMatrix
+            }
+            return Matrix()
         }
 
     fun createCapture(drawingCapture: DrawingCapture?, cameraView: CameraView): Array<Any?>? {
@@ -1101,13 +1108,21 @@ class DrawView : FrameLayout, OnTouchListener {
                     bitmap.height.toFloat()),
                     RectF(0f, 0f, width.toFloat(), height.toFloat()), Matrix.ScaleToFit.END)
         }
-        val byteArrayOutputStream = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
-        val bitmapArray = byteArrayOutputStream.toByteArray()
-        bitmap.recycle()
+//        val byteArrayOutputStream = ByteArrayOutputStream()
+//        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
+//        val bitmapArray = byteArrayOutputStream.toByteArray()
+//        bitmap.recycle()
         mDrawMoveHistory.add(DrawMove.newInstance()
-                .setBackgroundImage(bitmapArray, matrix)
+                .setBackgroundImage(bitmap, matrix)
                 .setPaint(SerializablePaint()))
+
+        val left = (width - bitmap.width) / 2
+        val top = (height - bitmap.height) / 2
+        val bottom = bitmap.height + top
+        val right = bitmap.width + left
+
+        backgroundRect = Rect(left, top, right, bottom)
+
         mDrawMoveHistoryIndex++
         mDrawMoveBackgroundIndex = mDrawMoveHistoryIndex
         if (onDrawViewListener != null) onDrawViewListener?.onEndDrawing()
@@ -1138,12 +1153,12 @@ class DrawView : FrameLayout, OnTouchListener {
         if (mDrawMoveHistoryIndex >= -1 &&
                 mDrawMoveHistoryIndex < mDrawMoveHistory.size - 1) mDrawMoveHistory = mDrawMoveHistory.subList(0, mDrawMoveHistoryIndex + 1)
         val bitmap = BitmapUtils.GetBitmapForDrawView(this, backgroundImage, backgroundType, 50)
-        val byteArrayOutputStream = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
-        val bitmapArray = byteArrayOutputStream.toByteArray()
-        bitmap.recycle()
+//        val byteArrayOutputStream = ByteArrayOutputStream()
+//        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
+//        val bitmapArray = byteArrayOutputStream.toByteArray()
+//        bitmap.recycle()
         mDrawMoveHistory.add(DrawMove.newInstance()
-                .setBackgroundImage(bitmapArray, backgroundMatrix)
+                .setBackgroundImage(bitmap, backgroundMatrix)
                 .setPaint(SerializablePaint()))
         mDrawMoveHistoryIndex++
         mDrawMoveBackgroundIndex = mDrawMoveHistoryIndex
@@ -1196,11 +1211,6 @@ class DrawView : FrameLayout, OnTouchListener {
         return this
     }
 
-    // PRIVATE METHODS
-    override fun onCreateDrawableState(extraSpace: Int): IntArray {
-        return super.onCreateDrawableState(extraSpace)
-    }
-
     /**
      * Draw the background image on DrawViewCanvas
      *
@@ -1208,9 +1218,8 @@ class DrawView : FrameLayout, OnTouchListener {
      * @param canvas   tha DrawView canvas
      */
     private fun drawBackgroundImage(drawMove: DrawMove, canvas: Canvas) {
-        if (drawMove.backgroundImage.isEmpty()) return
-        canvas.drawBitmap(BitmapFactory.decodeByteArray(drawMove.backgroundImage, 0,
-                drawMove.backgroundImage.size), drawMove.backgroundMatrix, null)
+        val bgBimtap = backgroundImageBitmap ?: return
+        canvas.drawBitmap(bgBimtap, drawMove.backgroundMatrix, null)
     }
 
     /**

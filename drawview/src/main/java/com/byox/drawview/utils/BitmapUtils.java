@@ -1,26 +1,20 @@
 package com.byox.drawview.utils;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.Point;
-import android.graphics.RectF;
+import android.graphics.Rect;
 import android.media.ExifInterface;
 import android.util.Log;
-import android.util.Size;
 import android.view.View;
 
-import com.byox.drawview.enums.BackgroundScale;
 import com.byox.drawview.enums.BackgroundType;
 import com.byox.drawview.views.DrawView;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 
 /**
@@ -34,8 +28,16 @@ public class BitmapUtils {
 
         int ivWidth = imageViewDest.getWidth();
         int ivHeight = imageViewDest.getHeight();
-        int newWidth = ivWidth;
-        int newHeight = (int) Math.floor((double) currentBitmapHeight * ((double) newWidth / (double) currentBitmapWidth));
+        int newWidth = 0;
+        int newHeight = 0;
+
+        if (currentBitmapHeight > currentBitmapWidth) {
+            newHeight = ivHeight;
+            newWidth = (int) Math.floor((double) currentBitmapWidth * ((double) newHeight / (double) currentBitmapHeight));
+        } else {
+            newWidth = ivWidth;
+            newHeight = (int) Math.floor((double) currentBitmapHeight * ((double) newWidth / (double) currentBitmapWidth));
+        }
 
         return Bitmap.createScaledBitmap(bitmapSrc, newWidth, newHeight, true);
     }
@@ -223,6 +225,15 @@ public class BitmapUtils {
         Canvas canvas = new Canvas(bmOverlay);
         canvas.drawBitmap(bmp1, new Matrix(), null);
         canvas.drawBitmap(bmp2, 0, 0, null);
+        return bmOverlay;
+    }
+
+    public static Bitmap GetCombinedBitmaps(Bitmap bmp1, Matrix matrix, Bitmap bmp2, Rect rect, int destWidth, int destHeight) {
+        Bitmap bmOverlay = Bitmap.createBitmap(destWidth, destHeight, bmp1.getConfig());
+        Canvas canvas = new Canvas(bmOverlay);
+        canvas.clipRect(rect);
+        canvas.drawBitmap(bmp1, matrix, null);
+        canvas.drawBitmap(bmp2, 0f, 0f, null);
         return bmOverlay;
     }
 }
